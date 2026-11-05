@@ -19,7 +19,7 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 - **Mapa** com um marcador por local; ao tocar, mostra nome, data, preço e **Ver detalhes**
 - **Detalhes** completos do evento, com mapa do local
 - **Cadastro e edição de eventos** com imagem pela **câmera ou galeria**
-- **Categorias**: listar, cadastrar, editar e excluir
+- **Categorias** (tipos de evento): listar, cadastrar, editar e excluir, com **cor e ícone** escolhidos no cadastro. Todo evento herda a cor da sua categoria, e o mapa mostra uma legenda
 - **Locais**: listar, cadastrar, editar e excluir, com latitude e longitude escolhidas no mapa ou pelo GPS
 - **Perfil** com os dados do usuário e botão **Sair**
 

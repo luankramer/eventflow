@@ -22,7 +22,7 @@ Todas as rotas, exceto `/`, `/health`, `/auth/login` e `/auth/registro`, exigem 
 | GET | `/eventos/{id}` | Detalhes completos |
 | POST / PUT | `/eventos`, `/eventos/{id}` | Cadastro e edição |
 | DELETE | `/eventos/{id}` | Exclusão |
-| GET / POST | `/categorias` | Listar e cadastrar |
+| GET / POST | `/categorias` | Listar e cadastrar (`nome`, `descricao`, `cor` em `#RRGGBB`, `icone`) |
 | GET / PUT / DELETE | `/categorias/{id}` | Detalhar, editar, excluir (bloqueado se houver eventos) |
 | GET / POST | `/locais` | Listar e cadastrar (nome, latitude, longitude, endereço opcional) |
 | GET / PUT / DELETE | `/locais/{id}` | Detalhar, editar, excluir (bloqueado se houver eventos) |
@@ -102,6 +102,12 @@ Testes automatizados: `python -m pytest -q`
    ou, na aba de chaves legadas, a `service_role`. Copie também a **Project URL**.
 
 As tabelas são criadas sozinhas quando a API sobe pela primeira vez.
+
+> Se o seu banco foi criado **antes** da versão com cor e ícone nas categorias, rode uma vez no
+> **SQL Editor** do Supabase:
+> ```sql
+> ALTER TABLE categorias ADD COLUMN IF NOT EXISTS cor varchar(7), ADD COLUMN IF NOT EXISTS icone varchar(40);
+> ```
 
 ### 2. Repositório
 

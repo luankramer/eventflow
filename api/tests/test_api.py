@@ -58,8 +58,10 @@ def test_login_logout_e_perfil(client, auth):
 def test_fluxo_completo(client, auth):
     # Categoria: criar, editar, nome duplicado
     cat = client.post("/categorias", json={"nome": "Show"}, headers=auth).json()
-    r = client.put(f"/categorias/{cat['id']}", json={"nome": "Música", "descricao": "Shows"}, headers=auth)
+    r = client.put(f"/categorias/{cat['id']}", json={"nome": "Música", "descricao": "Shows", "cor": "#e8175d", "icone": "musica"}, headers=auth)
     assert r.status_code == 200 and r.json()["nome"] == "Música"
+    assert r.json()["cor"] == "#E8175D" and r.json()["icone"] == "musica"
+    assert client.post("/categorias", json={"nome": "Cor ruim", "cor": "vermelho"}, headers=auth).status_code == 422
     assert client.post("/categorias", json={"nome": "música"}, headers=auth).status_code == 409
 
     # Local: validação de coordenadas, criar, editar
@@ -83,7 +85,7 @@ def test_fluxo_completo(client, auth):
     ev = client.post("/eventos", json=base, headers=auth)
     assert ev.status_code == 201, ev.text
     ev = ev.json()
-    assert ev["preco"] == 25.5 and ev["categoria"]["nome"] == "Música"
+    assert ev["preco"] == 25.5 and ev["categoria"]["nome"] == "Música" and ev["categoria"]["cor"] == "#E8175D"
     assert ev["local"]["latitude"] == -9.97 and ev["hora"] == "19:30:00"
 
     r = client.put(f"/eventos/{ev['id']}", json={**base, "nome": "Festival de Verão", "preco": 0}, headers=auth)

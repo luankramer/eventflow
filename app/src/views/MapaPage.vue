@@ -14,6 +14,21 @@
     <ion-content :scroll-y="false">
       <div ref="elementoMapa" class="mapa" />
 
+      <!-- Legenda: cada cor é um tipo de evento. Tocar filtra o mapa. -->
+      <div v-if="tiposNoMapa.length" class="legenda">
+        <button type="button" :class="{ ativo: filtro === null }" @click="filtrar(null)">Todos</button>
+        <button
+          v-for="c in tiposNoMapa"
+          :key="c.id"
+          type="button"
+          :class="{ ativo: filtro === c.id }"
+          :style="{ '--tipo': corCategoria(c).cor, '--tipo-tinta': corCategoria(c).tinta }"
+          @click="filtrar(c.id)"
+        >
+          <span class="ponto" /> {{ c.nome }}
+        </button>
+      </div>
+
       <div v-if="!carregando && !grupos.length" class="aviso-flutuante cartao">
         <ion-icon :icon="locationOutline" />
         Nenhum evento com local cadastrado ainda.
@@ -56,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { computed, ref, onBeforeUnmount } from 'vue'
 import {
   IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar,
   onIonViewDidEnter, onIonViewWillEnter, useIonRouter,
@@ -71,7 +86,29 @@ import { formatarData, formatarHora, formatarPreco } from '@/services/formato'
 
 const ionRouter = useIonRouter()
 const elementoMapa = ref(null)
+const todosEventos = ref([])
 const grupos = ref([])
+const filtro = ref(null)
+
+// Tipos de evento presentes no mapa, para a legenda.
+const tiposNoMapa = computed(() => {
+  const mapa = new Map()
+  for (const e of todosEventos.value) mapa.set(e.categoria.id, e.categoria)
+  return [...mapa.values()].sort((a, b) => a.nome.localeCompare(b.nome))
+})
+
+function filtrar(id) {
+  filtro.value = id
+  selecionado.value = null
+  aplicarFiltro()
+  enquadrar()
+}
+
+function aplicarFiltro() {
+  const lista = filtro.value === null ? todosEventos.value : todosEventos.value.filter((e) => e.categoria.id === filtro.value)
+  grupos.value = agruparPorLocal(lista)
+  desenharMarcadores()
+}
 const selecionado = ref(null)
 const carregando = ref(true)
 
@@ -133,7 +170,9 @@ async function carregar() {
   carregando.value = true
   try {
     const eventos = await api.eventos()
-    grupos.value = agruparPorLocal(eventos)
+    todosEventos.value = eventos
+    if (filtro.value !== null && !eventos.some((e) => e.categoria.id === filtro.value)) filtro.value = null
+    grupos.value = agruparPorLocal(filtro.value === null ? eventos : eventos.filter((e) => e.categoria.id === filtro.value))
     if (selecionado.value) {
       selecionado.value = grupos.value.find((g) => g.local.id === selecionado.value.local.id) ?? null
     }
@@ -175,6 +214,52 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   z-index: 0;
+}
+.legenda {
+  position: absolute;
+  z-index: 500;
+  top: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 12px 6px;
+  scrollbar-width: none;
+}
+.legenda::-webkit-scrollbar {
+  display: none;
+}
+.legenda button {
+  --tipo: var(--ef-noite);
+  --tipo-tinta: #fff;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 13px;
+  background: #fff;
+  color: var(--ef-tinta);
+  font: 700 13px/1 var(--ef-fonte);
+  box-shadow: 0 4px 14px rgba(30, 16, 54, 0.16);
+  cursor: pointer;
+}
+.legenda .ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--tipo);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px color-mix(in srgb, var(--tipo) 40%, transparent);
+}
+.legenda button.ativo {
+  background: var(--tipo);
+  color: var(--tipo-tinta);
+}
+.legenda button.ativo .ponto {
+  background: var(--tipo-tinta);
+  box-shadow: none;
 }
 .aviso-flutuante {
   position: absolute;

@@ -14,7 +14,14 @@ from app.security import gerar_hash
 
 USUARIO = {"nome": "Usuário Teste", "email": "teste@eventflow.com", "senha": "123456"}
 
-CATEGORIAS = ["Música", "Gastronomia", "Esporte", "Cultura", "Tecnologia"]
+# nome, cor, ícone (o app mostra cada tipo de evento com essa cor e esse ícone)
+CATEGORIAS = [
+    ("Música", "#E8175D", "musica"),
+    ("Gastronomia", "#FFB800", "gastronomia"),
+    ("Esporte", "#12B5A5", "esporte"),
+    ("Cultura", "#6B2FA8", "arte"),
+    ("Tecnologia", "#2F6BFF", "tecnologia"),
+]
 
 LOCAIS = [
     ("Parque da Maternidade", -9.9747, -67.8076, "Av. Getúlio Vargas, Rio Branco - AC"),
@@ -40,10 +47,12 @@ def main() -> None:
             db.add(usuario)
 
         categorias = {c.nome: c for c in db.scalars(select(Categoria))}
-        for nome in CATEGORIAS:
+        for nome, cor, icone in CATEGORIAS:
             if nome not in categorias:
-                categorias[nome] = Categoria(nome=nome)
+                categorias[nome] = Categoria(nome=nome, cor=cor, icone=icone)
                 db.add(categorias[nome])
+            elif not categorias[nome].cor:
+                categorias[nome].cor, categorias[nome].icone = cor, icone
 
         locais = {l.nome: l for l in db.scalars(select(Local))}
         for nome, lat, lng, endereco in LOCAIS:

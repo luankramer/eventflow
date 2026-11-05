@@ -27,6 +27,8 @@ class Categoria(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str] = mapped_column(String(80), unique=True)
     descricao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cor: Mapped[str | None] = mapped_column(String(7), nullable=True)  # ex.: "#E8175D"
+    icone: Mapped[str | None] = mapped_column(String(40), nullable=True)  # ex.: "musica"
 
     eventos: Mapped[list["Evento"]] = relationship(back_populates="categoria")
 

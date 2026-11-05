@@ -12,51 +12,77 @@
     <ion-content class="ion-padding">
       <div v-if="carregandoDados" class="centro"><ion-spinner name="crescent" /></div>
 
-      <form v-else class="formulario" @submit.prevent="salvar">
+      <form v-else class="formulario" :style="estiloCor" @submit.prevent="salvar">
         <!-- Imagem -->
         <button type="button" class="seletor-imagem" :class="{ comImagem: previa }" @click="selecionarImagem">
           <img v-if="previa" :src="previa" alt="" />
           <div v-else class="placeholder">
-            <ion-icon :icon="cameraOutline" />
+            <span class="placeholder-icone"><ion-icon :icon="cameraOutline" /></span>
             <strong>Adicionar imagem</strong>
-            <span>Câmera ou galeria</span>
+            <span>Tire uma foto ou escolha da galeria</span>
           </div>
           <span v-if="previa" class="trocar"><ion-icon :icon="cameraOutline" /> Trocar imagem</span>
         </button>
 
-        <div>
-          <label class="rotulo" for="nome">Nome do evento *</label>
-          <ion-input id="nome" v-model="form.nome" fill="outline" placeholder="Ex.: Festival de Música" :maxlength="150" />
-        </div>
-
-        <div>
-          <label class="rotulo" for="descricao">Descrição</label>
-          <ion-textarea
-            id="descricao"
-            v-model="form.descricao"
-            fill="outline"
-            placeholder="Conte um pouco sobre o evento"
-            :auto-grow="true"
-            :rows="3"
-          />
-        </div>
-
-        <div class="campo-grupo data-hora">
+        <section class="bloco">
+          <h2><ion-icon :icon="documentTextOutline" /> Informações</h2>
           <div>
-            <span class="rotulo">Data *</span>
-            <div class="campo-data">
-              <ion-icon :icon="calendarOutline" class="icone-campo" />
-              <ion-datetime-button :datetime="`data-${uid}`" />
-            </div>
+            <label class="rotulo" for="nome">Nome do evento *</label>
+            <ion-input id="nome" v-model="form.nome" fill="outline" placeholder="Ex.: Festival de Música" :maxlength="150" />
           </div>
           <div>
-            <span class="rotulo">Hora *</span>
-            <div class="campo-data">
-              <ion-icon :icon="timeOutline" class="icone-campo" />
-              <ion-datetime-button :datetime="`hora-${uid}`" />
+            <label class="rotulo" for="descricao">Descrição</label>
+            <ion-textarea
+              id="descricao"
+              v-model="form.descricao"
+              fill="outline"
+              placeholder="O que vai acontecer, atrações, o que levar…"
+              :auto-grow="true"
+              :rows="3"
+            />
+          </div>
+        </section>
+
+        <section class="bloco">
+          <h2><ion-icon :icon="pricetagsOutline" /> Tipo de evento *</h2>
+          <p class="explica">A cor e o ícone do evento vêm da categoria escolhida.</p>
+          <div class="tipos" role="radiogroup" aria-label="Categoria">
+            <button
+              v-for="c in categorias"
+              :key="c.id"
+              type="button"
+              role="radio"
+              class="tipo"
+              :class="{ ativo: form.categoria_id === c.id }"
+              :aria-checked="form.categoria_id === c.id"
+              :style="{ '--tipo': corCategoria(c).cor, '--tipo-suave': corCategoria(c).suave, '--tipo-texto': corCategoria(c).texto, '--tipo-tinta': corCategoria(c).tinta }"
+              @click="form.categoria_id = c.id"
+            >
+              <ion-icon :icon="iconeCategoria(c)" /> {{ c.nome }}
+            </button>
+            <router-link to="/categorias/nova" class="tipo novo"><ion-icon :icon="add" /> Nova</router-link>
+          </div>
+        </section>
+
+        <section class="bloco">
+          <h2><ion-icon :icon="calendarOutline" /> Quando *</h2>
+          <div class="campo-grupo data-hora">
+            <div>
+              <span class="rotulo">Data</span>
+              <div class="campo-data">
+                <ion-icon :icon="calendarOutline" class="icone-campo" />
+                <ion-datetime-button :datetime="`data-${uid}`" />
+              </div>
+            </div>
+            <div>
+              <span class="rotulo">Hora</span>
+              <div class="campo-data">
+                <ion-icon :icon="timeOutline" class="icone-campo" />
+                <ion-datetime-button :datetime="`hora-${uid}`" />
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         <ion-modal :keep-contents-mounted="true">
           <ion-datetime
@@ -84,34 +110,11 @@
           />
         </ion-modal>
 
-        <div>
-          <label class="rotulo" for="preco">Preço (R$)</label>
-          <ion-input id="preco" v-model="form.preco" fill="outline" inputmode="decimal" placeholder="0,00 = gratuito">
-            <span slot="start" class="prefixo">R$</span>
-          </ion-input>
-        </div>
-
-        <div>
+        <section class="bloco">
+          <h2><ion-icon :icon="locationOutline" /> Onde *</h2>
           <div class="rotulo-linha">
-            <span class="rotulo">Categoria *</span>
-            <router-link to="/categorias/nova" class="link-novo">+ Nova</router-link>
-          </div>
-          <ion-select
-            v-model="form.categoria_id"
-            fill="outline"
-            interface="action-sheet"
-            placeholder="Selecione a categoria"
-            cancel-text="Cancelar"
-            :interface-options="{ header: 'Categoria' }"
-          >
-            <ion-select-option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nome }}</ion-select-option>
-          </ion-select>
-        </div>
-
-        <div>
-          <div class="rotulo-linha">
-            <span class="rotulo">Local *</span>
-            <router-link to="/locais/novo" class="link-novo">+ Novo</router-link>
+            <span class="rotulo">Local</span>
+            <router-link to="/locais/novo" class="link-novo">+ Novo local</router-link>
           </div>
           <ion-select
             v-model="form.local_id"
@@ -119,19 +122,33 @@
             interface="action-sheet"
             placeholder="Selecione o local"
             cancel-text="Cancelar"
-            :interface-options="{ header: 'Local' }"
+            :interface-options="{ header: 'Local do evento' }"
           >
             <ion-select-option v-for="l in locais" :key="l.id" :value="l.id">{{ l.nome }}</ion-select-option>
           </ion-select>
-          <p class="dica">O local define onde o evento aparece no mapa.</p>
-        </div>
+          <p class="explica">É pelo local que o evento aparece no mapa.</p>
+        </section>
 
-        <ion-button type="submit" expand="block" class="botao-grande" :disabled="salvando">
-          <ion-spinner v-if="salvando" name="crescent" />
-          <span v-else>{{ editando ? 'Salvar alterações' : 'Cadastrar evento' }}</span>
-        </ion-button>
+        <section class="bloco">
+          <h2><ion-icon :icon="cashOutline" /> Ingresso</h2>
+          <div class="preco-linha">
+            <ion-input id="preco" v-model="form.preco" fill="outline" inputmode="decimal" placeholder="0,00">
+              <span slot="start" class="prefixo">R$</span>
+            </ion-input>
+            <button type="button" class="gratuito-botao" :class="{ ativo: ehGratuito }" @click="form.preco = ''">
+              <ion-icon :icon="ehGratuito ? checkmarkCircle : ellipseOutline" /> Gratuito
+            </button>
+          </div>
+        </section>
       </form>
     </ion-content>
+
+    <ion-footer v-if="!carregandoDados" class="ion-no-border rodape">
+      <ion-button expand="block" class="botao-grande" :disabled="salvando" @click="salvar">
+        <ion-spinner v-if="salvando" name="crescent" />
+        <span v-else>{{ editando ? 'Salvar alterações' : 'Cadastrar evento' }}</span>
+      </ion-button>
+    </ion-footer>
   </ion-page>
 </template>
 
@@ -139,11 +156,15 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonDatetime, IonDatetimeButton, IonHeader, IonIcon,
+  IonBackButton, IonButton, IonButtons, IonContent, IonDatetime, IonDatetimeButton, IonFooter, IonHeader, IonIcon,
   IonInput, IonModal, IonPage, IonSelect, IonSelectOption, IonSpinner, IonTextarea, IonTitle, IonToolbar,
   onIonViewWillEnter, useIonRouter,
 } from '@ionic/vue'
-import { calendarOutline, cameraOutline, timeOutline } from 'ionicons/icons'
+import {
+  add, calendarOutline, cameraOutline, cashOutline, checkmarkCircle, documentTextOutline, ellipseOutline,
+  locationOutline, pricetagsOutline, timeOutline,
+} from 'ionicons/icons'
+import { corCategoria, iconeCategoria } from '@/services/cores'
 import { api } from '@/services/api'
 import { voltarPara } from '@/services/navegacao'
 import { avisar, avisarErro, avisarSucesso } from '@/services/avisos'
@@ -171,6 +192,14 @@ const previa = ref(null)
 const novaImagem = ref(null) // blob ainda não enviado
 const carregandoDados = ref(true)
 const salvando = ref(false)
+
+const categoriaAtual = computed(() => categorias.value.find((c) => c.id === form.categoria_id))
+// O formulário assume a cor da categoria escolhida (botões e destaques).
+const estiloCor = computed(() => {
+  const c = corCategoria(categoriaAtual.value ?? { cor: '#E8175D' })
+  return { '--cat': c.cor, '--cat-suave': c.suave }
+})
+const ehGratuito = computed(() => !String(form.preco ?? '').trim() || lerPreco() === 0)
 
 function mudarDataHora(ev) {
   const valor = ev.detail.value
@@ -291,17 +320,53 @@ async function salvar() {
   place-items: center;
   height: 60%;
 }
+.formulario {
+  padding-bottom: 12px;
+}
+.bloco {
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.bloco h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+.bloco h2 ion-icon {
+  color: var(--cat);
+  font-size: 19px;
+  transition: color 0.2s;
+}
+.explica {
+  margin: -6px 0 0;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+.bloco .explica:last-child {
+  margin: -4px 2px 0;
+  font-size: 12px;
+}
+
+/* imagem */
 .seletor-imagem {
   position: relative;
   width: 100%;
-  height: 180px;
-  border-radius: var(--ef-raio);
-  border: 2px dashed #c9cbe6;
-  background: #fff;
+  height: 190px;
+  border-radius: 22px;
+  border: 2px dashed color-mix(in srgb, var(--cat) 45%, #ffffff);
+  background: color-mix(in srgb, var(--cat-suave) 60%, #ffffff);
   overflow: hidden;
   padding: 0;
   cursor: pointer;
   font: inherit;
+  transition: border-color 0.2s, background 0.2s;
 }
 .seletor-imagem.comImagem {
   border: 0;
@@ -318,17 +383,24 @@ async function salvar() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   color: var(--ion-color-medium);
 }
-.placeholder ion-icon {
-  font-size: 36px;
-  color: var(--ion-color-primary);
-  margin-bottom: 4px;
+.placeholder-icone {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--cat);
+  color: #fff;
+  font-size: 24px;
+  margin-bottom: 8px;
+  transition: background 0.2s;
 }
 .placeholder strong {
   color: var(--ion-text-color);
-  font-size: 15px;
+  font-size: 16px;
 }
 .placeholder span {
   font-size: 13px;
@@ -337,18 +409,59 @@ async function salvar() {
   position: absolute;
   right: 10px;
   bottom: 10px;
-  background: rgba(17, 20, 45, 0.7);
+  background: rgba(30, 16, 54, 0.72);
   color: #fff;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 7px 13px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
+/* tipo de evento */
+.tipos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 13px 9px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--tipo-suave);
+  background: var(--tipo-suave);
+  color: var(--tipo-texto);
+  font: 700 14px/1 var(--ef-fonte);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.tipo ion-icon {
+  font-size: 17px;
+}
+.tipo.ativo {
+  background: var(--tipo);
+  border-color: var(--tipo);
+  color: var(--tipo-tinta);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--tipo) 35%, transparent);
+}
+.tipo.novo {
+  background: #fff;
+  border: 1.5px dashed #cfc6df;
+  color: var(--ef-tinta-2);
+}
+.tipo:focus-visible {
+  outline: 3px solid var(--ef-noite);
+  outline-offset: 2px;
+}
+
+/* campos */
 .icone-campo {
-  color: var(--ion-color-primary);
+  color: var(--cat);
   font-size: 18px;
   margin-left: 6px;
 }
@@ -360,19 +473,51 @@ async function salvar() {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  margin-bottom: -6px;
 }
 .link-novo {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--ion-color-primary);
+  font-weight: 700;
+  color: var(--ef-pitaya);
   text-decoration: none;
 }
-.dica {
-  font-size: 12px;
-  color: var(--ion-color-medium);
-  margin: 6px 2px 0;
+.preco-linha {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
 }
-ion-button.botao-grande {
-  margin-top: 8px;
+.preco-linha ion-input {
+  flex: 1;
+}
+.gratuito-botao {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--ef-borda);
+  background: #fff;
+  color: var(--ef-tinta-2);
+  font: 700 14px/1 var(--ef-fonte);
+  cursor: pointer;
+}
+.gratuito-botao.ativo {
+  border-color: var(--ef-rio);
+  background: #dcf5f2;
+  color: #0a7a6f;
+}
+.gratuito-botao ion-icon {
+  font-size: 18px;
+}
+
+/* rodapé fixo */
+.rodape {
+  background: #fff;
+  padding: 10px 16px calc(var(--ion-safe-area-bottom, 0px) + 10px);
+  box-shadow: 0 -8px 24px rgba(30, 16, 54, 0.08);
+}
+.rodape ion-button {
+  margin: 0;
 }
 </style>
