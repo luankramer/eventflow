@@ -58,7 +58,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { IonButton, IonContent, IonIcon, IonInput, IonInputPasswordToggle, IonPage, IonSpinner, useIonRouter } from '@ionic/vue'
+import { IonButton, IonContent, IonIcon, IonInput, IonInputPasswordToggle, IonPage, IonSpinner, toastController, useIonRouter } from '@ionic/vue'
 import { calendar } from 'ionicons/icons'
 import { api } from '@/services/api'
 import { salvarSessao } from '@/services/sessao'
@@ -82,6 +82,7 @@ async function enviar() {
       ? await api.registrar(nome.value.trim(), email.value.trim(), senha.value)
       : await api.login(email.value.trim(), senha.value)
     await salvarSessao(resposta.access_token, resposta.usuario)
+    toastController.dismiss().catch(() => {}) // fecha avisos de erro anteriores
     senha.value = ''
     ionRouter.navigate('/tabs/eventos', 'root', 'replace')
   } catch (erro) {
