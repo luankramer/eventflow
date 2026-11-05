@@ -1,0 +1,8 @@
+{
+  "appId": "br.uninorte.eventflow",
+  "appName": "EventFlow",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}

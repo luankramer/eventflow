@@ -1,0 +1,283 @@
+/* ============================================================
+   EventFlow — tema claro e limpo
+   Cor principal: índigo · fundo cinza-claro · cartões brancos
+   ============================================================ */
+:root {
+  --ion-color-primary: #4f46e5;
+  --ion-color-primary-rgb: 79, 70, 229;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #463ec9;
+  --ion-color-primary-tint: #6159e7;
+
+  --ion-color-success: #16a34a;
+  --ion-color-success-rgb: 22, 163, 74;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-shade: #138f41;
+  --ion-color-success-tint: #2dac5c;
+
+  --ion-color-danger: #dc2626;
+  --ion-color-danger-rgb: 220, 38, 38;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-shade: #c22121;
+  --ion-color-danger-tint: #e03c3c;
+
+  --ion-color-dark: #1f2333;
+  --ion-color-dark-rgb: 31, 35, 51;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-shade: #1b1f2d;
+  --ion-color-dark-tint: #353947;
+
+  --ion-color-medium: #6b7080;
+  --ion-color-medium-rgb: 107, 112, 128;
+
+  --ion-background-color: #f5f6fa;
+  --ion-background-color-rgb: 245, 246, 250;
+  --ion-text-color: #1f2333;
+  --ion-text-color-rgb: 31, 35, 51;
+
+  --ion-toolbar-background: #f5f6fa;
+  --ion-toolbar-border-color: transparent;
+  --ion-item-background: #ffffff;
+  --ion-tab-bar-background: #ffffff;
+  --ion-tab-bar-border-color: #e8e9f0;
+  --ion-tab-bar-color: #8a8fa0;
+  --ion-tab-bar-color-selected: #4f46e5;
+
+  --ef-borda: #e8e9f0;
+  --ef-suave: #eef0ff;
+  --ef-raio: 16px;
+  --ef-sombra: 0 1px 2px rgba(17, 20, 45, 0.04), 0 4px 16px rgba(17, 20, 45, 0.05);
+}
+
+ion-toolbar {
+  --border-width: 0 !important;
+  --min-height: 60px;
+}
+ion-header.header-md {
+  box-shadow: none;
+}
+ion-title {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.2px;
+}
+.titulo-pagina {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 4px 0 2px;
+}
+.subtitulo-pagina {
+  color: var(--ion-color-medium);
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+ion-button {
+  --border-radius: 12px;
+  --box-shadow: none;
+  text-transform: none;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+ion-button.botao-grande {
+  height: 50px;
+  font-size: 16px;
+}
+ion-searchbar {
+  --background: #ffffff;
+  --border-radius: 14px;
+  --box-shadow: var(--ef-sombra);
+  --placeholder-color: #8a8fa0;
+  padding: 0 !important;
+}
+ion-fab-button {
+  --box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+}
+
+/* ---------- Cartões e listas ---------- */
+.cartao {
+  background: #ffffff;
+  border: 1px solid var(--ef-borda);
+  border-radius: var(--ef-raio);
+  box-shadow: var(--ef-sombra);
+  overflow: hidden;
+}
+.lista-cartao {
+  background: #ffffff;
+  border: 1px solid var(--ef-borda);
+  border-radius: var(--ef-raio);
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+.lista-cartao ion-item {
+  --padding-start: 16px;
+  --inner-padding-end: 12px;
+  --min-height: 60px;
+  --border-color: var(--ef-borda);
+}
+.lista-cartao ion-item:last-of-type {
+  --border-width: 0;
+  --inner-border-width: 0;
+}
+
+/* ---------- Formulários ---------- */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.formulario ion-input,
+.formulario ion-textarea,
+.formulario ion-select {
+  --background: #ffffff;
+  --border-radius: 12px;
+  --border-color: var(--ef-borda);
+  --highlight-color-focused: var(--ion-color-primary);
+  --padding-start: 14px;
+  --padding-end: 14px;
+}
+.formulario ion-select {
+  width: 100%;
+}
+.rotulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a4f61;
+  margin: 0 0 6px 2px;
+  display: block;
+}
+.campo-grupo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.campo-data {
+  background: #ffffff;
+  border: 1px solid var(--ef-borda);
+  border-radius: 12px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+.campo-data ion-datetime-button {
+  justify-content: flex-start;
+}
+.campo-data ion-datetime-button::part(native) {
+  background: transparent;
+  font-size: 16px;
+  color: var(--ion-text-color);
+  padding: 6px;
+}
+
+/* ---------- Chips de categoria ---------- */
+.chip-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--ef-suave);
+  color: var(--ion-color-primary);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.preco {
+  font-weight: 700;
+  color: var(--ion-text-color);
+  white-space: nowrap;
+}
+.preco.gratuito {
+  color: var(--ion-color-success);
+}
+
+/* ---------- Estado vazio ---------- */
+.vazio {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ion-color-medium);
+}
+.vazio ion-icon {
+  font-size: 52px;
+  color: #c8cbe0;
+  margin-bottom: 8px;
+}
+.vazio h3 {
+  color: var(--ion-text-color);
+  font-size: 17px;
+  font-weight: 700;
+  margin: 4px 0;
+}
+.vazio p {
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+/* ---------- Pinos do mapa ---------- */
+.pino {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--ion-color-primary);
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.45);
+  border: 3px solid #fff;
+  transition: transform 0.15s;
+}
+.pino-ativo {
+  background: #1f2333;
+  transform: rotate(-45deg) scale(1.15);
+}
+.pino-ponto {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+}
+.pino-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  transform: rotate(45deg);
+  background: #fff;
+  color: var(--ion-color-primary);
+  font: 700 11px/18px system-ui, sans-serif;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.leaflet-container {
+  font-family: inherit;
+  background: #e9ecf3;
+}
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+/* Botão vermelho nos alertas de confirmação */
+.botao-perigo {
+  color: var(--ion-color-danger) !important;
+}
+
+/* Telas sem cabeçalho: respeitar a barra de status do Android (modo tela cheia) */
+.respeita-status {
+  padding-top: calc(var(--ion-safe-area-top, 0px) + 8px) !important;
+}
+
+/* Data ocupa mais espaço que a hora no formulário de evento */
+.campo-grupo.data-hora {
+  grid-template-columns: 1.5fr 1fr;
+}
+.campo-data ion-datetime-button::part(native) {
+  white-space: nowrap;
+}
