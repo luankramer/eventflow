@@ -1,14 +1,16 @@
 <template>
   <ion-page>
-    <ion-content class="ion-padding">
+    <ion-content class="fundo-noite">
+      <div class="luzes" aria-hidden="true"><span /><span /><span /></div>
       <div class="login respeita-status">
         <div class="marca">
-          <div class="logo"><ion-icon :icon="calendar" /></div>
-          <h1>EventFlow</h1>
-          <p>{{ modoCadastro ? 'Crie sua conta para começar' : 'Entre para ver e organizar seus eventos' }}</p>
+          <div class="logo"><ion-icon :icon="ticket" /></div>
+          <span class="nome-app">EventFlow</span>
+          <h1>{{ modoCadastro ? 'Crie sua conta e comece a organizar' : 'Shows, feiras e festas num só lugar' }}</h1>
         </div>
 
-        <form class="formulario" @submit.prevent="enviar">
+        <form class="formulario cartao-login" @submit.prevent="enviar">
+          <h2>{{ modoCadastro ? 'Criar conta' : 'Entrar' }}</h2>
           <ion-input
             v-if="modoCadastro"
             v-model="nome"
@@ -43,14 +45,13 @@
             <ion-spinner v-if="carregando" name="crescent" />
             <span v-else>{{ modoCadastro ? 'Criar conta' : 'Entrar' }}</span>
           </ion-button>
-        </form>
-
-        <p class="alternar">
+          <p class="alternar">
           {{ modoCadastro ? 'Já tem conta?' : 'Ainda não tem conta?' }}
           <a href="#" @click.prevent="modoCadastro = !modoCadastro">
             {{ modoCadastro ? 'Entrar' : 'Criar conta' }}
           </a>
-        </p>
+          </p>
+        </form>
       </div>
     </ion-content>
   </ion-page>
@@ -59,7 +60,7 @@
 <script setup>
 import { ref } from 'vue'
 import { IonButton, IonContent, IonIcon, IonInput, IonInputPasswordToggle, IonPage, IonSpinner, toastController, useIonRouter } from '@ionic/vue'
-import { calendar } from 'ionicons/icons'
+import { ticket } from 'ionicons/icons'
 import { api } from '@/services/api'
 import { salvarSessao } from '@/services/sessao'
 import { avisar, avisarErro } from '@/services/avisos'
@@ -94,55 +95,110 @@ async function enviar() {
 </script>
 
 <style scoped>
+.fundo-noite {
+  --background: var(--ef-noite);
+}
+.luzes span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  pointer-events: none;
+}
+.luzes span:nth-child(1) {
+  width: 280px;
+  height: 280px;
+  top: -90px;
+  right: -110px;
+  background: var(--ef-pitaya);
+  opacity: 0.7;
+}
+.luzes span:nth-child(2) {
+  width: 220px;
+  height: 220px;
+  top: 180px;
+  left: -120px;
+  background: var(--ef-acai);
+  opacity: 0.8;
+}
+.luzes span:nth-child(3) {
+  width: 160px;
+  height: 160px;
+  top: 90px;
+  right: 30px;
+  background: var(--ef-ipe);
+  opacity: 0.35;
+}
 .login {
-  max-width: 420px;
+  position: relative;
+  max-width: 440px;
   margin: 0 auto;
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 24px 4px;
+  justify-content: flex-end;
+  padding: 24px 16px calc(var(--ion-safe-area-bottom, 0px) + 20px);
 }
 .marca {
-  text-align: center;
-  margin-bottom: 32px;
+  color: #fff;
+  padding: 0 6px 26px;
 }
 .logo {
-  width: 72px;
-  height: 72px;
-  border-radius: 22px;
-  margin: 0 auto 16px;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
   display: grid;
   place-items: center;
-  background: var(--ion-color-primary);
-  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.3);
+  background: linear-gradient(140deg, #ff3d7f, var(--ef-pitaya) 50%, var(--ef-acai));
+  box-shadow: 0 12px 28px rgba(232, 23, 93, 0.45);
+  transform: rotate(-8deg);
+  margin-bottom: 22px;
 }
 .logo ion-icon {
-  font-size: 36px;
+  font-size: 30px;
   color: #fff;
+  transform: rotate(8deg);
+}
+.nome-app {
+  display: block;
+  font-family: var(--ef-fonte-titulo);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--ef-ipe);
+  margin-bottom: 6px;
 }
 .marca h1 {
-  font-size: 30px;
+  font-size: 38px;
   font-weight: 800;
-  letter-spacing: -0.6px;
-  margin: 0 0 6px;
-}
-.marca p {
-  color: var(--ion-color-medium);
+  line-height: 1.02;
+  letter-spacing: -1.4px;
   margin: 0;
+  max-width: 330px;
+  font-variation-settings: 'wdth' 85;
+}
+.cartao-login {
+  background: #fff;
+  border-radius: 28px;
+  padding: 24px 20px 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+.cartao-login h2 {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 2px;
 }
 .formulario ion-button {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .alternar {
   text-align: center;
   color: var(--ion-color-medium);
-  margin-top: 24px;
+  margin: 6px 0 0;
   font-size: 14px;
 }
 .alternar a {
-  color: var(--ion-color-primary);
-  font-weight: 600;
+  color: var(--ef-pitaya);
+  font-weight: 700;
   text-decoration: none;
 }
 </style>

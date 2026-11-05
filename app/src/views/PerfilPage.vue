@@ -1,33 +1,32 @@
 <template>
   <ion-page>
-    <ion-content class="ion-padding">
-      <header class="topo respeita-status">
-        <h1 class="titulo-pagina">Perfil</h1>
+    <ion-content>
+      <header class="hero perfil">
+        <span class="luz-ipe" />
+        <div class="avatar"><span>{{ iniciais(usuario?.nome) }}</span></div>
+        <h1>{{ usuario?.nome }}</h1>
+        <p>{{ usuario?.email }}</p>
       </header>
 
-      <section class="cartao perfil">
-        <div class="avatar">{{ iniciais(usuario?.nome) }}</div>
-        <h2>{{ usuario?.nome }}</h2>
-        <p>{{ usuario?.email }}</p>
-      </section>
-
+      <div class="conteudo">
+      <h2 class="titulo-secao">Seus dados</h2>
       <ion-list class="lista-cartao" lines="full">
         <ion-item>
-          <ion-icon slot="start" :icon="personOutline" color="primary" />
+          <div slot="start" class="icone-item pitaya"><ion-icon :icon="personOutline" /></div>
           <ion-label>
             <p>Nome</p>
             <h3>{{ usuario?.nome }}</h3>
           </ion-label>
         </ion-item>
         <ion-item>
-          <ion-icon slot="start" :icon="mailOutline" color="primary" />
+          <div slot="start" class="icone-item acai"><ion-icon :icon="mailOutline" /></div>
           <ion-label>
             <p>E-mail</p>
             <h3>{{ usuario?.email }}</h3>
           </ion-label>
         </ion-item>
         <ion-item>
-          <ion-icon slot="start" :icon="idCardOutline" color="primary" />
+          <div slot="start" class="icone-item rio"><ion-icon :icon="idCardOutline" /></div>
           <ion-label>
             <p>ID do usuário</p>
             <h3>#{{ usuario?.id }}</h3>
@@ -40,6 +39,7 @@
       </ion-button>
 
       <p class="servidor">Servidor: {{ API_URL }}</p>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -77,48 +77,75 @@ async function sair() {
 </script>
 
 <style scoped>
-.topo {
-  padding-top: 8px;
-  margin-bottom: 12px;
-}
 .perfil {
   text-align: center;
-  padding: 28px 16px 22px;
-  margin-bottom: 16px;
+  padding-bottom: 34px;
 }
 .avatar {
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 96px;
+  margin: 6px auto 14px;
   border-radius: 50%;
-  margin: 0 auto 12px;
+  padding: 4px;
+  background: conic-gradient(from 200deg, var(--ef-ipe), var(--ef-pitaya), var(--ef-acai), var(--ef-ipe));
+}
+.avatar span {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 30px;
+  background: var(--ef-noite);
+  border: 3px solid var(--ef-noite);
+  font-family: var(--ef-fonte-titulo);
+  font-size: 34px;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+  letter-spacing: -1px;
 }
-.perfil h2 {
-  margin: 0 0 4px;
-  font-size: 20px;
-  font-weight: 800;
+.perfil h1 {
+  font-size: 26px;
+  margin-bottom: 4px;
 }
-.perfil p {
-  margin: 0;
-  color: var(--ion-color-medium);
+.conteudo {
+  padding: 4px 16px 32px;
+}
+.icone-item {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  margin-right: 4px;
+}
+.icone-item.pitaya {
+  background: #fde7ef;
+  color: var(--ef-pitaya);
+}
+.icone-item.acai {
+  background: #efe5fa;
+  color: var(--ef-acai);
+}
+.icone-item.rio {
+  background: #dcf5f2;
+  color: #0a7a6f;
+}
+ion-label p {
+  font-size: 12px;
 }
 ion-label h3 {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
 }
 .sair {
   margin-top: 24px;
+  --border-width: 2px;
 }
 .servidor {
   text-align: center;
   font-size: 11px;
-  color: #a3a7b6;
+  color: #a69fb8;
   margin-top: 16px;
   word-break: break-all;
 }

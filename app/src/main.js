@@ -18,6 +18,8 @@ import '@ionic/vue/css/display.css'
 import '@ionic/vue/css/text-alignment.css'
 
 /* Tema do EventFlow */
+import '@fontsource-variable/bricolage-grotesque'
+import '@fontsource-variable/figtree'
 import './theme.css'
 
 // Se o token expirar ou ficar inválido, a API responde 401: limpa a sessão e volta ao login.

@@ -1,73 +1,72 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/tabs/eventos" text="" />
-        </ion-buttons>
-        <ion-title>Detalhes</ion-title>
-        <ion-buttons v-if="evento" slot="end">
-          <ion-button :router-link="`/eventos/${evento.id}/editar`">
-            <ion-icon slot="start" :icon="createOutline" /> Editar
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <ion-content :fullscreen="true">
+      <!-- botões flutuantes sobre a capa -->
+      <div class="barra-flutuante">
+        <ion-back-button default-href="/tabs/eventos" text="" class="botao-vidro" />
+        <ion-button v-if="evento" class="botao-vidro editar" :router-link="`/eventos/${evento.id}/editar`">
+          <ion-icon slot="start" :icon="createOutline" /> Editar
+        </ion-button>
+      </div>
 
-    <ion-content>
       <div v-if="carregando && !evento" class="centro"><ion-spinner name="crescent" /></div>
 
-      <div v-if="evento" class="detalhe">
+      <div v-if="evento" class="detalhe" :style="{ '--cat': cor.cor, '--cat-suave': cor.suave, '--cat-texto': cor.texto, '--cat-tinta': cor.tinta }">
         <div class="capa">
-          <img v-if="evento.imagem_url && !falhouImagem" :src="evento.imagem_url" alt="" @error="falhouImagem = true" />
-          <div v-else class="capa-vazia"><ion-icon :icon="imageOutline" /></div>
+          <CapaEvento :evento="evento" tamanho-icone="88px" />
+          <div class="veu" />
+          <div class="capa-texto">
+            <span class="chip-cat"><ion-icon :icon="icone" /> {{ evento.categoria.nome }}</span>
+            <h1>{{ evento.nome }}</h1>
+          </div>
         </div>
 
         <div class="corpo">
-          <span class="chip-cat">{{ evento.categoria.nome }}</span>
-          <h1>{{ evento.nome }}</h1>
-
-          <div class="infos cartao">
-            <div class="info">
-              <div class="icone"><ion-icon :icon="calendarOutline" /></div>
-              <div>
-                <span>Data</span>
-                <strong class="capitalizar">{{ formatarDataLonga(evento.data) }}</strong>
+          <!-- ingresso com data, horário e preço -->
+          <div class="sombra">
+            <div class="ingresso">
+              <div class="canhoto">
+                <span>{{ data.semana }}</span>
+                <strong>{{ data.dia }}</strong>
+                <span>{{ data.mes }}</span>
               </div>
-            </div>
-            <div class="info">
-              <div class="icone"><ion-icon :icon="timeOutline" /></div>
-              <div>
-                <span>Horário</span>
-                <strong>{{ formatarHora(evento.hora) }}</strong>
-              </div>
-            </div>
-            <div class="info">
-              <div class="icone"><ion-icon :icon="pricetagOutline" /></div>
-              <div>
-                <span>Preço</span>
-                <strong class="preco" :class="{ gratuito: !Number(evento.preco) }">{{ formatarPreco(evento.preco) }}</strong>
-              </div>
-            </div>
-            <div class="info">
-              <div class="icone"><ion-icon :icon="locationOutline" /></div>
-              <div>
-                <span>Local</span>
-                <strong>{{ evento.local.nome }}</strong>
-                <small v-if="evento.local.endereco">{{ evento.local.endereco }}</small>
+              <div class="dados">
+                <div>
+                  <span class="rotulo-dado">Data</span>
+                  <strong class="capitalizar">{{ formatarDataLonga(evento.data) }}</strong>
+                </div>
+                <div class="dados-linha">
+                  <div>
+                    <span class="rotulo-dado">Horário</span>
+                    <strong class="grande">{{ formatarHora(evento.hora) }}</strong>
+                  </div>
+                  <div>
+                    <span class="rotulo-dado">Preço</span>
+                    <strong class="grande preco" :class="{ gratuito: !Number(evento.preco) }">{{ formatarPreco(evento.preco) }}</strong>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <section v-if="evento.descricao">
-            <h2>Sobre o evento</h2>
+            <h2 class="titulo-secao">Sobre o evento</h2>
             <p class="descricao">{{ evento.descricao }}</p>
           </section>
 
           <section>
-            <h2>Localização</h2>
-            <div ref="elementoMapa" class="mini-mapa cartao" />
-            <p class="coordenadas">{{ evento.local.latitude.toFixed(5) }}, {{ evento.local.longitude.toFixed(5) }}</p>
+            <h2 class="titulo-secao">Onde vai ser</h2>
+            <div class="local cartao">
+              <div ref="elementoMapa" class="mini-mapa" />
+              <div class="local-info">
+                <div class="local-icone"><ion-icon :icon="location" /></div>
+                <div>
+                  <strong>{{ evento.local.nome }}</strong>
+                  <span v-if="evento.local.endereco">{{ evento.local.endereco }}</span>
+                  <small>{{ evento.local.latitude.toFixed(5) }}, {{ evento.local.longitude.toFixed(5) }}</small>
+                </div>
+              </div>
+            </div>
           </section>
 
           <ion-button expand="block" fill="clear" color="danger" class="excluir" @click="excluir">
@@ -80,27 +79,30 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonSpinner,
-  IonTitle, IonToolbar, onIonViewDidEnter, onIonViewWillEnter, useIonRouter,
+  IonBackButton, IonButton, IonContent, IonIcon, IonPage, IonSpinner,
+  onIonViewDidEnter, onIonViewWillEnter, useIonRouter,
 } from '@ionic/vue'
-import {
-  calendarOutline, createOutline, imageOutline, locationOutline, pricetagOutline, timeOutline, trashOutline,
-} from 'ionicons/icons'
+import { createOutline, location, trashOutline } from 'ionicons/icons'
+import CapaEvento from '@/components/CapaEvento.vue'
 import { api } from '@/services/api'
 import { avisarErro, avisarSucesso, confirmar } from '@/services/avisos'
 import { criarMapa, iconePino, L } from '@/services/mapa'
-import { formatarDataLonga, formatarHora, formatarPreco } from '@/services/formato'
+import { formatarDataLonga, formatarHora, formatarPreco, partesData } from '@/services/formato'
+import { corCategoria, iconeCategoria } from '@/services/cores'
 
 const route = useRoute()
 const ionRouter = useIonRouter()
 const evento = ref(null)
 const carregando = ref(true)
-const falhouImagem = ref(false)
 const elementoMapa = ref(null)
 let mapa = null
+
+const cor = computed(() => corCategoria(evento.value?.categoria))
+const icone = computed(() => iconeCategoria(evento.value?.categoria))
+const data = computed(() => partesData(evento.value.data))
 
 function desenharMapa() {
   if (!evento.value || !elementoMapa.value) return
@@ -111,7 +113,7 @@ function desenharMapa() {
     mapa.setView(pos, 15)
     mapa.eachLayer((l) => l instanceof L.Marker && mapa.removeLayer(l))
   }
-  L.marker(pos, { icon: iconePino() }).addTo(mapa)
+  L.marker(pos, { icon: iconePino({ cor: cor.value.cor }) }).addTo(mapa)
   mapa.invalidateSize()
 }
 
@@ -119,7 +121,6 @@ async function carregar() {
   carregando.value = true
   try {
     evento.value = await api.evento(route.params.id)
-    falhouImagem.value = false
     await nextTick()
     desenharMapa()
   } catch (erro) {
@@ -148,109 +149,206 @@ onBeforeUnmount(() => mapa?.remove())
 </script>
 
 <style scoped>
+.barra-flutuante {
+  position: absolute;
+  z-index: 10;
+  top: calc(var(--ion-safe-area-top, 0px) + 10px);
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.botao-vidro {
+  pointer-events: auto;
+  --background: rgba(30, 16, 54, 0.45);
+  --background-activated: rgba(30, 16, 54, 0.6);
+  --color: #fff;
+  --border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 999px;
+}
+ion-back-button.botao-vidro {
+  width: 44px;
+  height: 44px;
+  --icon-font-size: 22px;
+  --padding-start: 0;
+  --padding-end: 0;
+  display: block;
+}
+.editar {
+  height: 44px;
+  margin: 0;
+  --padding-start: 16px;
+  --padding-end: 18px;
+}
 .centro {
   display: grid;
   place-items: center;
   height: 60%;
 }
 .capa {
-  height: 230px;
-  background: var(--ef-suave);
-}
-.capa img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.capa-vazia {
-  height: 100%;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-}
-.capa-vazia ion-icon {
-  font-size: 56px;
-  color: rgba(255, 255, 255, 0.7);
-}
-.corpo {
-  padding: 20px 16px 32px;
-  margin-top: -20px;
-  border-radius: 22px 22px 0 0;
-  background: var(--ion-background-color);
   position: relative;
+  height: 360px;
+}
+.veu {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(30, 16, 54, 0.45) 0%, rgba(30, 16, 54, 0) 30%, rgba(30, 16, 54, 0.15) 55%, rgba(30, 16, 54, 0.92) 100%);
+}
+.capa-texto {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 56px;
+  color: #fff;
+}
+.capa-texto .chip-cat {
+  background: var(--cat);
+  color: var(--cat-tinta);
 }
 h1 {
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 800;
-  letter-spacing: -0.4px;
-  margin: 10px 0 16px;
-  line-height: 1.2;
+  letter-spacing: -0.8px;
+  line-height: 1.08;
+  margin: 10px 0 0;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
 }
-h2 {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 24px 0 8px;
+.corpo {
+  position: relative;
+  margin-top: -36px;
+  padding: 0 16px 36px;
 }
-.infos {
-  padding: 4px 16px;
+
+/* ingresso */
+.sombra {
+  filter: drop-shadow(0 10px 22px rgba(30, 16, 54, 0.14));
 }
-.info {
+.ingresso {
+  --recorte: 10px;
   display: flex;
-  gap: 14px;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--ef-borda);
+  background: #fff;
+  border-radius: 22px;
+  overflow: hidden;
+  -webkit-mask:
+    radial-gradient(circle at 92px 0, transparent var(--recorte), #000 calc(var(--recorte) + 0.5px)) top / 100% 51% no-repeat,
+    radial-gradient(circle at 92px 100%, transparent var(--recorte), #000 calc(var(--recorte) + 0.5px)) bottom / 100% 51% no-repeat;
+  mask:
+    radial-gradient(circle at 92px 0, transparent var(--recorte), #000 calc(var(--recorte) + 0.5px)) top / 100% 51% no-repeat,
+    radial-gradient(circle at 92px 100%, transparent var(--recorte), #000 calc(var(--recorte) + 0.5px)) bottom / 100% 51% no-repeat;
 }
-.info:last-child {
-  border-bottom: 0;
-}
-.icone {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--ef-suave);
-  display: grid;
-  place-items: center;
+.canhoto {
+  width: 92px;
   flex-shrink: 0;
+  background: var(--cat);
+  color: var(--cat-tinta);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 2px dashed rgba(255, 255, 255, 0.6);
+  padding: 16px 0;
 }
-.icone ion-icon {
-  font-size: 20px;
-  color: var(--ion-color-primary);
+.canhoto span {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.9;
 }
-.info span {
+.canhoto strong {
+  font-family: var(--ef-fonte-titulo);
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.5px;
+  margin: 2px 0;
+}
+.dados {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 16px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dados-linha {
+  display: flex;
+  gap: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #f0ebf7;
+}
+.rotulo-dado {
   display: block;
   font-size: 12px;
+  font-weight: 600;
   color: var(--ion-color-medium);
+  margin-bottom: 2px;
 }
-.info strong {
+.dados strong {
   display: block;
   font-size: 15px;
+  font-weight: 700;
 }
-.info small {
-  display: block;
-  color: var(--ion-color-medium);
-  font-size: 13px;
-  margin-top: 2px;
+.dados strong.grande {
+  font-family: var(--ef-fonte-titulo);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
 }
 .capitalizar::first-letter {
   text-transform: uppercase;
 }
 .descricao {
   margin: 0;
-  color: #4a4f61;
-  line-height: 1.55;
+  color: var(--ef-tinta-2);
+  font-size: 16px;
+  line-height: 1.6;
   white-space: pre-line;
 }
-.mini-mapa {
-  height: 170px;
+
+/* local */
+.local {
+  overflow: hidden;
 }
-.coordenadas {
-  font-size: 12px;
+.mini-mapa {
+  height: 160px;
+}
+.local-info {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px 16px;
+}
+.local-icone {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--cat-suave);
+  color: var(--cat);
+  font-size: 20px;
+}
+.local-info strong {
+  display: block;
+  font-size: 16px;
+}
+.local-info span {
+  display: block;
+  color: var(--ef-tinta-2);
+  font-size: 14px;
+  margin-top: 2px;
+}
+.local-info small {
+  display: block;
   color: var(--ion-color-medium);
-  margin: 6px 2px 0;
+  font-size: 12px;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
 }
 .excluir {
-  margin-top: 24px;
+  margin-top: 22px;
 }
 </style>

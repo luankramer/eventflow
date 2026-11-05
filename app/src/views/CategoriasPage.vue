@@ -18,7 +18,7 @@
 
       <ion-list v-if="categorias.length" class="lista-cartao" lines="full">
         <ion-item v-for="c in categorias" :key="c.id" button :detail="true" :router-link="`/categorias/${c.id}/editar`">
-          <div slot="start" class="bolinha"><ion-icon :icon="pricetagOutline" /></div>
+          <div slot="start" class="bolinha" :style="{ background: corCategoria(c).cor, color: corCategoria(c).tinta }"><ion-icon :icon="iconeCategoria(c)" /></div>
           <ion-label>
             <h2>{{ c.nome }}</h2>
             <p v-if="c.descricao">{{ c.descricao }}</p>
@@ -27,7 +27,7 @@
       </ion-list>
 
       <div v-if="!carregando && !categorias.length" class="vazio">
-        <ion-icon :icon="pricetagsOutline" />
+        <div class="vazio-icone"><ion-icon :icon="pricetagsOutline" /></div>
         <h3>Nenhuma categoria</h3>
         <p>Crie categorias como Música, Esporte ou Cultura.</p>
         <ion-button router-link="/categorias/nova">Nova categoria</ion-button>
@@ -48,7 +48,8 @@ import {
   IonBackButton, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonLabel,
   IonList, IonPage, IonRefresher, IonRefresherContent, IonSpinner, IonTitle, IonToolbar, onIonViewWillEnter,
 } from '@ionic/vue'
-import { add, pricetagOutline, pricetagsOutline } from 'ionicons/icons'
+import { add, pricetagsOutline } from 'ionicons/icons'
+import { corCategoria, iconeCategoria } from '@/services/cores'
 import { api } from '@/services/api'
 import { avisarErro } from '@/services/avisos'
 
@@ -81,17 +82,16 @@ onIonViewWillEnter(carregar)
   padding: 40px;
 }
 .bolinha {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--ef-suave);
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
   display: grid;
   place-items: center;
   margin-right: 4px;
 }
 .bolinha ion-icon {
-  color: var(--ion-color-primary);
-  font-size: 18px;
+  color: inherit;
+  font-size: 19px;
 }
 ion-label h2 {
   font-weight: 600;

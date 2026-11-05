@@ -27,13 +27,13 @@ export function criarMapa(elemento, { centro = CENTRO_PADRAO, zoom = 13, interat
 }
 
 /** Marcador em formato de "pino", desenhado em CSS (classe .pino no theme.css). */
-export function iconePino({ quantidade = 0, selecionado = false } = {}) {
+export function iconePino({ quantidade = 0, selecionado = false, cor = '#E8175D' } = {}) {
   const badge = quantidade > 1 ? `<span class="pino-badge">${quantidade}</span>` : ''
   return L.divIcon({
     className: '',
-    html: `<div class="pino${selecionado ? ' pino-ativo' : ''}"><span class="pino-ponto"></span>${badge}</div>`,
-    iconSize: [34, 42],
-    iconAnchor: [17, 40],
+    html: `<div class="pino${selecionado ? ' pino-ativo' : ''}" style="--pino-cor:${cor}"><span class="pino-ponto"></span>${badge}</div>`,
+    iconSize: [36, 44],
+    iconAnchor: [18, 42],
   })
 }
 

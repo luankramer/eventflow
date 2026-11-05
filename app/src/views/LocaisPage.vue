@@ -18,7 +18,7 @@
 
       <ion-list v-if="locais.length" class="lista-cartao" lines="full">
         <ion-item v-for="l in locais" :key="l.id" button :detail="true" :router-link="`/locais/${l.id}/editar`">
-          <div slot="start" class="bolinha"><ion-icon :icon="locationOutline" /></div>
+          <div slot="start" class="bolinha"><ion-icon :icon="location" /></div>
           <ion-label>
             <h2>{{ l.nome }}</h2>
             <p v-if="l.endereco">{{ l.endereco }}</p>
@@ -28,7 +28,7 @@
       </ion-list>
 
       <div v-if="!carregando && !locais.length" class="vazio">
-        <ion-icon :icon="mapOutline" />
+        <div class="vazio-icone"><ion-icon :icon="mapOutline" /></div>
         <h3>Nenhum local</h3>
         <p>Cadastre os locais com latitude e longitude para os eventos aparecerem no mapa.</p>
         <ion-button router-link="/locais/novo">Novo local</ion-button>
@@ -49,7 +49,7 @@ import {
   IonBackButton, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonLabel,
   IonList, IonPage, IonRefresher, IonRefresherContent, IonSpinner, IonTitle, IonToolbar, onIonViewWillEnter,
 } from '@ionic/vue'
-import { add, locationOutline, mapOutline } from 'ionicons/icons'
+import { add, location, mapOutline } from 'ionicons/icons'
 import { api } from '@/services/api'
 import { avisarErro } from '@/services/avisos'
 
@@ -82,17 +82,17 @@ onIonViewWillEnter(carregar)
   padding: 40px;
 }
 .bolinha {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #e7f6ec;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: var(--ef-rio);
   display: grid;
   place-items: center;
   margin-right: 4px;
 }
 .bolinha ion-icon {
-  color: #16a34a;
-  font-size: 18px;
+  color: #fff;
+  font-size: 19px;
 }
 ion-label h2 {
   font-weight: 600;
