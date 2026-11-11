@@ -1,12 +1,13 @@
-# Mantém a API (Koyeb) e o banco (Supabase) acordados, sem serviço externo.
-# A cada 20 minutos chama /health, que consulta o banco.
+# Mantém a API (Render) e o banco (Supabase) acordados, sem serviço externo.
+# A cada 10 minutos chama /health, que consulta o banco.
 # O GitHub pode atrasar execuções agendadas em alguns minutos; ainda assim fica bem
-# abaixo de 1 hora (Koyeb) e de 7 dias (Supabase).
+# o Render dorme após 15 min sem acesso; o Supabase pausa após 7 dias.
+# 1 serviço ligado o mês todo usa ~720 h, dentro das 750 h gratuitas do Render.
 name: Manter online
 
 on:
   schedule:
-    - cron: '*/20 * * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -28,7 +29,7 @@ jobs:
             exit 0
           fi
           for tentativa in 1 2 3; do
-            if curl -fsS --max-time 60 "$URL/health"; then echo; echo "OK"; exit 0; fi
+            if curl -fsS --max-time 90 "$URL/health"; then echo; echo "OK"; exit 0; fi
             echo "Tentativa $tentativa falhou; aguardando a API acordar..."
             sleep 20
           done

@@ -3,7 +3,7 @@ import { sessao } from './sessao'
 
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '')
 
-const TIMEOUT_MS = 45000 // o servidor gratuito pode levar alguns segundos para "acordar"
+const TIMEOUT_MS = 90000 // o servidor gratuito (Render) pode levar até ~1 min para "acordar"
 
 let aoPerderSessao = () => {}
 export function definirAoPerderSessao(callback) {

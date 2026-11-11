@@ -3,7 +3,7 @@
 API do aplicativo **EventFlow** (Avaliação Final — Desenvolvimento de Aplicativos).
 
 **Stack:** FastAPI · SQLAlchemy 2 · PostgreSQL (Supabase) · JWT · Supabase Storage para as imagens.
-**Hospedagem gratuita:** API no Koyeb + banco e imagens no Supabase.
+**Hospedagem gratuita:** API no Render + banco e imagens no Supabase.
 
 ---
 
@@ -111,18 +111,24 @@ As tabelas são criadas sozinhas quando a API sobe pela primeira vez.
 
 ### 2. Repositório
 
-Suba o repositório do projeto (pasta raiz, com `api/` e `app/`) para o GitHub. O Koyeb faz o deploy a partir dele.
+Suba o repositório do projeto (pasta raiz, com `api/` e `app/`) para o GitHub. O Render faz o deploy a partir dele.
 O `.gitignore` já impede que o `.env` com suas chaves vá junto.
 
-### 3. Koyeb (API)
+### 3. Render (API)
 
-1. Crie a conta em [koyeb.com](https://www.koyeb.com) e clique em **Create Web Service → GitHub**.
-2. Escolha o repositório. Em **Builder**, selecione **Dockerfile** e, em **Work directory**, informe `api`.
-3. Em **Instance**, escolha a **Free**.
-4. Em **Environment variables**, cadastre: `DATABASE_URL`, `JWT_SECRET`, `SUPABASE_URL`,
+1. Entre em [render.com](https://render.com) com a conta do GitHub (plano gratuito, sem cartão).
+2. **New → Web Service** e escolha o repositório `eventflow`.
+3. Preencha:
+   - **Language/Runtime:** Docker
+   - **Root Directory:** `api`
+   - **Instance Type:** Free
+   - **Health Check Path** (em Advanced): `/health`
+4. Em **Environment Variables**, cadastre: `DATABASE_URL`, `JWT_SECRET`, `SUPABASE_URL`,
    `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET` e `SEED_DEMO=true` (veja o `.env.example`).
-5. Em **Ports**, confirme a porta `8000`, e em **Health checks** use o caminho `/health`.
-6. Deploy. A URL fica parecida com `https://eventflow-seunome.koyeb.app`. Abra `/docs` para conferir.
+5. **Deploy**. A URL fica parecida com `https://eventflow-xxxx.onrender.com`. Abra `/docs` para conferir.
+
+O plano gratuito dorme após 15 minutos sem acesso e leva cerca de 1 minuto para acordar.
+O workflow "Manter online" (passo 5) evita isso.
 
 ### 4. Dados iniciais
 
@@ -132,8 +138,8 @@ os eventos de exemplo. Ela só cria o que ainda não existe, então não duplica
 
 ### 5. Manter acordado
 
-O workflow `.github/workflows/manter-online.yml`, na raiz do repositório, chama `/health` a cada 20 minutos.
-Isso evita a hibernação do Koyeb e a pausa por inatividade do Supabase, sem precisar de serviço externo.
+O workflow `.github/workflows/manter-online.yml`, na raiz do repositório, chama `/health` a cada 10 minutos.
+Isso evita a hibernação do Render e a pausa por inatividade do Supabase, sem precisar de serviço externo.
 
-**No dia da apresentação:** abra `https://SUA-API.koyeb.app/health` uns minutos antes e confira
+**No dia da apresentação:** abra `https://SUA-API.onrender.com/health` uns minutos antes e confira
 se retorna `{"status": "ok", "banco": "ok"}`.

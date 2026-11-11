@@ -1,6 +1,6 @@
 """Armazenamento das imagens dos eventos.
 
-Em produção usa o Supabase Storage (o disco do Koyeb/Render é apagado a cada deploy).
+Em produção usa o Supabase Storage (o disco do Render é apagado a cada deploy).
 Sem Supabase configurado, salva na pasta local `uploads/` (útil só para testar no PC).
 """
 import uuid
