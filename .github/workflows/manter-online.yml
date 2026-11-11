@@ -1,0 +1,36 @@
+# Mantém a API (Koyeb) e o banco (Supabase) acordados, sem serviço externo.
+# A cada 20 minutos chama /health, que consulta o banco.
+# O GitHub pode atrasar execuções agendadas em alguns minutos; ainda assim fica bem
+# abaixo de 1 hora (Koyeb) e de 7 dias (Supabase).
+name: Manter online
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: app/.env.production
+          sparse-checkout-cone-mode: false
+
+      - name: Chamar /health
+        run: |
+          URL="${{ vars.API_URL }}"
+          [ -z "$URL" ] && URL=$(grep -E '^VITE_API_URL=' app/.env.production | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '[:space:]')
+          URL="${URL%/}"
+          if [ -z "$URL" ] || echo "$URL" | grep -q "seunome"; then
+            echo "API ainda não publicada (URL provisória); nada a fazer."
+            exit 0
+          fi
+          for tentativa in 1 2 3; do
+            if curl -fsS --max-time 60 "$URL/health"; then echo; echo "OK"; exit 0; fi
+            echo "Tentativa $tentativa falhou; aguardando a API acordar..."
+            sleep 20
+          done
+          echo "::error::A API não respondeu em $URL/health"
+          exit 1

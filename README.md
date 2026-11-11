@@ -27,18 +27,19 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 
 1. **Supabase**: crie o projeto, o bucket público `eventos` e copie as chaves. Detalhes no [README da API](api/README.md#1-supabase-banco--imagens).
 2. **GitHub**: suba esta pasta inteira para um repositório.
-3. **Koyeb**: crie o serviço apontando para o repositório, com **Work directory** = `api`, e cadastre as variáveis de ambiente. Detalhes no [README da API](api/README.md#3-koyeb-api).
-4. **Dados de exemplo**: no seu PC, rode `python seed.py` dentro de `api/` com o `DATABASE_URL` do Supabase.
-5. **URL da API no GitHub**: em **Settings → Secrets and variables → Actions → Variables**, crie `API_URL` com a URL do Koyeb (ex.: `https://eventflow-seunome.koyeb.app`, sem barra no final).
-6. **APK**: vá em **Actions → Gerar APK → Run workflow**. Em uns 5 minutos, o APK aparece em **Artifacts** dentro da execução.
-7. **Versão de entrega**: crie uma tag para publicar o APK em **Releases** com link fixo:
+3. **Koyeb**: crie o serviço apontando para o repositório, com **Work directory** = `api`, e cadastre as variáveis de ambiente, incluindo `SEED_DEMO=true` para criar os dados de exemplo. Detalhes no [README da API](api/README.md#3-koyeb-api).
+4. **URL da API no app**: coloque a URL do Koyeb em `app/.env.production` (ex.: `VITE_API_URL=https://eventflow-luankramer.koyeb.app`, sem barra no final) e faça o push.
+5. **APK**: o push do passo 4 dispara o workflow **Gerar APK**. Em uns 5 minutos, o APK aparece em **Actions → Gerar APK → Artifacts**.
+6. **Versão de entrega**: crie uma tag para publicar o APK em **Releases** com link fixo:
    ```bash
    git tag v1.0
    git push origin v1.0
    ```
-8. **Manter acordado**: cron-job.org chamando `https://SUA-API.koyeb.app/health` a cada 30 minutos.
 
-Login de teste criado pelo seed: **teste@eventflow.com** / **123456**
+O workflow **Manter online** chama `/health` a cada 20 minutos, para a API e o banco não hibernarem.
+Ele começa a funcionar sozinho assim que a URL do passo 4 estiver no repositório.
+
+Login de teste (criado com `SEED_DEMO=true`): **teste@eventflow.com** / **123456**
 
 ## Instalando o APK no celular
 

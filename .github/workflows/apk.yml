@@ -5,9 +5,9 @@
 # - Ao criar uma tag (ex.: v1.0), o APK também é publicado em "Releases",
 #   com um link fixo para entregar ao professor.
 #
-# Antes da primeira execução, cadastre a URL da API em:
-#   Settings > Secrets and variables > Actions > aba Variables > New repository variable
-#   Nome: API_URL    Valor: https://sua-api.koyeb.app
+# A URL da API vem do arquivo app/.env.production (VITE_API_URL=...).
+# Opcional: a variável de repositório API_URL (Settings > Secrets and variables > Actions > Variables)
+# tem prioridade sobre o arquivo.
 name: Gerar APK
 
 on:
@@ -29,37 +29,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Conferir variável API_URL
+      - name: Definir URL da API
         run: |
-          if [ -z "${{ vars.API_URL }}" ]; then
-            echo "::error::Cadastre a variável API_URL em Settings > Secrets and variables > Actions > Variables"
-            exit 1
+          URL="${{ vars.API_URL }}"
+          if [ -z "$URL" ] && [ -f .env.production ]; then
+            URL=$(grep -E '^VITE_API_URL=' .env.production | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '[:space:]')
           fi
-          echo "API: ${{ vars.API_URL }}"
+          if [ -z "$URL" ] || echo "$URL" | grep -q "seunome"; then
+            echo "::warning::APK não gerado: defina a URL da API publicada em app/.env.production (VITE_API_URL=https://...)"
+            echo "PULAR=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "VITE_API_URL=${URL%/}" >> "$GITHUB_ENV"
+          echo "API: ${URL%/}"
 
       - uses: actions/setup-node@v4
+        if: env.PULAR != 'true'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: app/package-lock.json
 
       - uses: actions/setup-java@v4
+        if: env.PULAR != 'true'
         with:
           distribution: temurin
           java-version: 21
 
       - name: Instalar dependências
+        if: env.PULAR != 'true'
         run: npm ci
 
       - name: Build do app (Vue + Vite)
+        if: env.PULAR != 'true'
         run: npm run build
-        env:
-          VITE_API_URL: ${{ vars.API_URL }}
 
       - name: Copiar o app para o projeto Android
+        if: env.PULAR != 'true'
         run: npx cap sync android
 
       - name: Compilar APK
+        if: env.PULAR != 'true'
         working-directory: app/android
         run: |
           chmod +x gradlew
@@ -67,13 +77,14 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk ../../EventFlow.apk
 
       - name: Disponibilizar APK (Actions > Artifacts)
+        if: env.PULAR != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: EventFlow-apk
           path: EventFlow.apk
 
       - name: Publicar na Release (apenas em tags v*)
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.PULAR != 'true' && startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: EventFlow.apk

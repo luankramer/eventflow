@@ -120,19 +120,20 @@ O `.gitignore` já impede que o `.env` com suas chaves vá junto.
 2. Escolha o repositório. Em **Builder**, selecione **Dockerfile** e, em **Work directory**, informe `api`.
 3. Em **Instance**, escolha a **Free**.
 4. Em **Environment variables**, cadastre: `DATABASE_URL`, `JWT_SECRET`, `SUPABASE_URL`,
-   `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET` (veja o `.env.example`).
+   `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET` e `SEED_DEMO=true` (veja o `.env.example`).
 5. Em **Ports**, confirme a porta `8000`, e em **Health checks** use o caminho `/health`.
 6. Deploy. A URL fica parecida com `https://eventflow-seunome.koyeb.app`. Abra `/docs` para conferir.
 
 ### 4. Dados iniciais
 
-No seu PC, crie o `.env` com o mesmo `DATABASE_URL` do Supabase e rode `python seed.py`.
-Assim o banco de produção já tem o usuário de teste, categorias, locais e eventos para a apresentação.
+Com `SEED_DEMO=true`, a API cria sozinha, ao subir, o usuário de teste, as categorias, os locais e
+os eventos de exemplo. Ela só cria o que ainda não existe, então não duplica nada nos próximos deploys.
+(Também dá para rodar `python seed.py` no PC com o `DATABASE_URL` do Supabase no `.env`.)
 
 ### 5. Manter acordado
 
-Em [cron-job.org](https://cron-job.org), crie um job `GET https://SUA-API.koyeb.app/health`
-a cada 30 minutos. Isso evita a hibernação do Koyeb e a pausa por inatividade do Supabase.
+O workflow `.github/workflows/manter-online.yml`, na raiz do repositório, chama `/health` a cada 20 minutos.
+Isso evita a hibernação do Koyeb e a pausa por inatividade do Supabase, sem precisar de serviço externo.
 
 **No dia da apresentação:** abra `https://SUA-API.koyeb.app/health` uns minutos antes e confira
 se retorna `{"status": "ok", "banco": "ok"}`.
