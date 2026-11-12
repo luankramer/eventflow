@@ -28,7 +28,7 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 1. **Supabase**: crie o projeto, o bucket público `eventos` e copie as chaves. Detalhes no [README da API](api/README.md#1-supabase-banco--imagens).
 2. **GitHub**: suba esta pasta inteira para um repositório.
 3. **Render**: crie o Web Service apontando para o repositório, com **Root Directory** = `api`, runtime Docker, instância Free, e cadastre as variáveis de ambiente, incluindo `SEED_DEMO=true` para criar os dados de exemplo. Detalhes no [README da API](api/README.md#3-render-api).
-4. **URL da API no app**: coloque a URL do Render em `app/.env.production` (ex.: `VITE_API_URL=https://eventflow-xxxx.onrender.com`, sem barra no final) e faça o push.
+4. **URL da API no app**: coloque a URL do Render em `app/.env.production` (ex.: `VITE_API_URL=https://eventflow-vnl4.onrender.com`, sem barra no final) e faça o push.
 5. **APK**: o push do passo 4 dispara o workflow **Gerar APK**. Em uns 5 minutos, o APK aparece em **Actions → Gerar APK → Artifacts**.
 6. **Versão de entrega**: crie uma tag para publicar o APK em **Releases** com link fixo:
    ```bash
@@ -56,7 +56,7 @@ Baixe o `EventFlow.apk` no celular e toque para instalar. O Android vai pedir pa
 | 4. Detalhes e cadastro | Detalhes → Editar → criar evento novo tirando foto com a câmera |
 | 5. Categorias e locais | Cadastros → nova categoria → novo local tocando no mapa ou em "Minha localização" |
 | 6. Perfil | Aba Perfil → Sair → app volta ao login |
-| 7. API | Abrir `https://SUA-API.onrender.com/docs` e mostrar que o evento criado no app está lá |
+| 7. API | Abrir `https://eventflow-vnl4.onrender.com/docs` e mostrar que o evento criado no app está lá |
 | 8. APK | Mostrar a Release no GitHub e o app instalado |
 
-**Antes de apresentar:** abra `https://SUA-API.onrender.com/health` e confira `{"status":"ok","banco":"ok"}`.
+**Antes de apresentar:** abra `https://eventflow-vnl4.onrender.com/health` e confira `{"status":"ok","banco":"ok"}`.

@@ -141,5 +141,5 @@ os eventos de exemplo. Ela só cria o que ainda não existe, então não duplica
 O workflow `.github/workflows/manter-online.yml`, na raiz do repositório, chama `/health` a cada 10 minutos.
 Isso evita a hibernação do Render e a pausa por inatividade do Supabase, sem precisar de serviço externo.
 
-**No dia da apresentação:** abra `https://SUA-API.onrender.com/health` uns minutos antes e confira
+**No dia da apresentação:** abra `https://eventflow-vnl4.onrender.com/health` uns minutos antes e confira
 se retorna `{"status": "ok", "banco": "ok"}`.
