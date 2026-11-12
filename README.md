@@ -8,7 +8,7 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 |---|---|---|
 | App | Vue 3, Vite, Ionic, Capacitor, Leaflet | [`app/`](app/README.md) |
 | API | Python, FastAPI, SQLAlchemy, JWT | [`api/`](api/README.md) |
-| Banco e imagens | PostgreSQL + Storage (Supabase) | — |
+| Banco e imagens | PostgreSQL (Supabase); as fotos ficam no próprio banco | — |
 | Hospedagem da API | Render (gratuito, sem cartão) | — |
 | APK | Gerado automaticamente pelo GitHub Actions | `.github/workflows/apk.yml` |
 
@@ -25,7 +25,7 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 
 ## Colocando no ar (ordem)
 
-1. **Supabase**: crie o projeto, o bucket público `eventos` e copie as chaves. Detalhes no [README da API](api/README.md#1-supabase-banco--imagens).
+1. **Supabase**: crie o projeto e copie o endereço de conexão do banco (Session pooler). Detalhes no [README da API](api/README.md#1-supabase-banco--imagens).
 2. **GitHub**: suba esta pasta inteira para um repositório.
 3. **Render**: crie o Web Service apontando para o repositório, com **Root Directory** = `api`, runtime Docker, instância Free, e cadastre as variáveis de ambiente, incluindo `SEED_DEMO=true` para criar os dados de exemplo. Detalhes no [README da API](api/README.md#3-render-api).
 4. **URL da API no app**: coloque a URL do Render em `app/.env.production` (ex.: `VITE_API_URL=https://eventflow-vnl4.onrender.com`, sem barra no final) e faça o push.

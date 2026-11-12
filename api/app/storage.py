@@ -1,14 +1,20 @@
 """Armazenamento das imagens dos eventos.
 
-Em produção usa o Supabase Storage (o disco do Render é apagado a cada deploy).
-Sem Supabase configurado, salva na pasta local `uploads/` (útil só para testar no PC).
+Padrão: a imagem é gravada no próprio banco (tabela `imagens`) e servida pela API em
+`/imagens/{nome}`. Assim não depende de chave extra nem do disco do servidor, que no
+Render é apagado a cada deploy.
+
+Opcional: com SUPABASE_URL e SUPABASE_SERVICE_KEY configurados, as imagens vão para o
+Supabase Storage (bucket SUPABASE_BUCKET).
 """
 import uuid
 
 import httpx
 from fastapi import HTTPException, UploadFile
+from sqlalchemy.orm import Session
 
 from . import config
+from .models import Imagem
 
 EXTENSOES = {
     "image/jpeg": "jpg",
@@ -20,7 +26,7 @@ EXTENSOES = {
 }
 
 
-async def salvar_imagem(arquivo: UploadFile, base_url: str) -> str:
+async def salvar_imagem(arquivo: UploadFile, base_url: str, db: Session) -> str:
     tipo = (arquivo.content_type or "").lower()
     if tipo not in EXTENSOES:
         raise HTTPException(400, "Envie uma imagem JPG, PNG, WEBP ou HEIC.")
@@ -31,7 +37,8 @@ async def salvar_imagem(arquivo: UploadFile, base_url: str) -> str:
     if len(conteudo) > config.UPLOAD_MAX_MB * 1024 * 1024:
         raise HTTPException(413, f"Imagem maior que {config.UPLOAD_MAX_MB} MB.")
 
-    nome = f"{uuid.uuid4().hex}.{EXTENSOES[tipo]}"
+    id_imagem = uuid.uuid4().hex
+    nome = f"{id_imagem}.{EXTENSOES[tipo]}"
 
     if config.usa_supabase_storage():
         destino = f"{config.SUPABASE_URL}/storage/v1/object/{config.SUPABASE_BUCKET}/{nome}"
@@ -46,7 +53,7 @@ async def salvar_imagem(arquivo: UploadFile, base_url: str) -> str:
             raise HTTPException(502, f"Falha ao enviar imagem ao Supabase: {resp.text[:200]}")
         return f"{config.SUPABASE_URL}/storage/v1/object/public/{config.SUPABASE_BUCKET}/{nome}"
 
-    config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    (config.UPLOAD_DIR / nome).write_bytes(conteudo)
+    db.add(Imagem(id=id_imagem, tipo=tipo, tamanho=len(conteudo), conteudo=conteudo))
+    db.commit()
     raiz = config.PUBLIC_BASE_URL or base_url.rstrip("/")
-    return f"{raiz}/uploads/{nome}"
+    return f"{raiz}/imagens/{nome}"

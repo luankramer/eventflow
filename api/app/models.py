@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text, Time
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, LargeBinary, Numeric, String, Text, Time
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -65,3 +65,15 @@ class Evento(Base):
 
     categoria: Mapped[Categoria] = relationship(back_populates="eventos", lazy="joined")
     local: Mapped[Local] = relationship(back_populates="eventos", lazy="joined")
+
+
+class Imagem(Base):
+    """Foto de evento guardada no próprio banco e servida em /imagens/{id}.{ext}."""
+
+    __tablename__ = "imagens"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    tipo: Mapped[str] = mapped_column(String(40))
+    tamanho: Mapped[int] = mapped_column(Integer)
+    conteudo: Mapped[bytes] = mapped_column(LargeBinary)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)

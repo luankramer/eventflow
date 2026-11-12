@@ -2,10 +2,9 @@ import io
 import os
 import tempfile
 
-# Banco e pasta de uploads temporários, configurados antes de importar o app.
+# Banco temporário, configurado antes de importar o app.
 _tmp = tempfile.mkdtemp()
 os.environ["DATABASE_URL"] = os.getenv("TEST_DATABASE_URL", f"sqlite:///{_tmp}/teste.db")
-os.environ["UPLOAD_DIR"] = f"{_tmp}/uploads"
 os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SERVICE_KEY"] = ""
 
@@ -75,7 +74,11 @@ def test_fluxo_completo(client, auth):
     up = client.post("/upload", files={"arquivo": ("foto.png", png, "image/png")}, headers=auth)
     assert up.status_code == 200, up.text
     url = up.json()["url"]
-    assert client.get(url.replace("http://testserver", "")).status_code == 200
+    assert "/imagens/" in url and url.endswith(".png")
+    img = client.get(url.replace("http://testserver", ""))  # pública: sem token
+    assert img.status_code == 200 and img.headers["content-type"] == "image/png"
+    assert img.content == b"\x89PNG\r\n\x1a\n" + b"0" * 100
+    assert client.get("/imagens/naoexiste.png").status_code == 404
     assert client.post("/upload", files={"arquivo": ("a.txt", io.BytesIO(b"oi"), "text/plain")}, headers=auth).status_code == 400
 
     # Evento: relações inválidas, criar, editar, buscar

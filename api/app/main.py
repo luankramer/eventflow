@@ -4,12 +4,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from . import config
 from .database import Base, SessionLocal, engine
-from .routers import auth, categorias, eventos, locais
+from .routers import auth, categorias, eventos, imagens, locais
 
 
 log = logging.getLogger("eventflow")
@@ -56,11 +54,7 @@ app.include_router(auth.router)
 app.include_router(categorias.router)
 app.include_router(locais.router)
 app.include_router(eventos.router)
-
-if not config.usa_supabase_storage():
-    config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=config.UPLOAD_DIR), name="uploads")
-
+app.include_router(imagens.router)
 
 @app.get("/", tags=["Status"])
 def raiz():

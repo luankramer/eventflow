@@ -39,7 +39,6 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "eventos")
 
-UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "uploads"))
 UPLOAD_MAX_MB = int(os.getenv("UPLOAD_MAX_MB", "5"))
 
 # URL pública da API, usada para montar links de imagens salvas localmente.

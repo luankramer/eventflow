@@ -2,7 +2,7 @@
 
 API do aplicativo **EventFlow** (Avaliação Final — Desenvolvimento de Aplicativos).
 
-**Stack:** FastAPI · SQLAlchemy 2 · PostgreSQL (Supabase) · JWT · Supabase Storage para as imagens.
+**Stack:** FastAPI · SQLAlchemy 2 · PostgreSQL (Supabase) · JWT. As fotos dos eventos ficam no próprio banco.
 **Hospedagem gratuita:** API no Render + banco e imagens no Supabase.
 
 ---
@@ -45,7 +45,7 @@ Envio (`POST`/`PUT /eventos`):
   "preco": 25.5,
   "categoria_id": 1,
   "local_id": 2,
-  "imagem_url": "https://xxxx.supabase.co/storage/v1/object/public/eventos/abc.jpg"
+  "imagem_url": "https://eventflow-vnl4.onrender.com/imagens/3fb094b4....jpg"
 }
 ```
 
@@ -83,7 +83,7 @@ python seed.py                         # dados de exemplo + usuário teste@event
 uvicorn app.main:app --reload --host 0.0.0.0
 ```
 
-Sem `.env`, a API usa SQLite (`eventflow.db`) e salva as imagens na pasta `uploads/`.
+Sem `.env`, a API usa SQLite (`eventflow.db`); as imagens ficam no mesmo banco.
 Para testar do celular na mesma rede Wi-Fi, use o IP do PC (ex.: `http://192.168.0.10:8000`).
 
 Testes automatizados: `python -m pytest -q`
@@ -97,9 +97,10 @@ Testes automatizados: `python -m pytest -q`
 1. Crie um projeto em [supabase.com](https://supabase.com). Guarde a senha do banco.
 2. **Banco:** clique em **Connect** no topo do projeto e copie a URI do **Session pooler**.
    Use esta, e não a "Direct connection" (que só funciona em IPv6). Troque `[YOUR-PASSWORD]` pela sua senha.
-3. **Imagens:** vá em **Storage → New bucket**, nome `eventos`, marque **Public bucket**.
-4. **Chave:** em **Project Settings → API Keys**, copie a chave secreta (`sb_secret_...`)
-   ou, na aba de chaves legadas, a `service_role`. Copie também a **Project URL**.
+3. **Imagens:** nada a fazer. A API grava as fotos na tabela `imagens` do próprio banco e as serve
+   em `/imagens/{nome}` (rota pública; os nomes são aleatórios).
+   *Opcional:* para usar o Supabase Storage, crie um bucket público e cadastre `SUPABASE_URL`,
+   `SUPABASE_SERVICE_KEY` (chave secreta) e `SUPABASE_BUCKET` na API.
 
 As tabelas são criadas sozinhas quando a API sobe pela primeira vez.
 
@@ -124,7 +125,7 @@ O `.gitignore` já impede que o `.env` com suas chaves vá junto.
    - **Instance Type:** Free
    - **Health Check Path** (em Advanced): `/health`
 4. Em **Environment Variables**, cadastre: `DATABASE_URL`, `JWT_SECRET`, `SUPABASE_URL`,
-   `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET` e `SEED_DEMO=true` (veja o `.env.example`).
+   `SUPABASE_BUCKET` e `SEED_DEMO=true` (veja o `.env.example`). `SUPABASE_SERVICE_KEY` é opcional.
 5. **Deploy**. A URL fica parecida com `https://eventflow-xxxx.onrender.com`. Abra `/docs` para conferir.
 
 O plano gratuito dorme após 15 minutos sem acesso e leva cerca de 1 minuto para acordar.

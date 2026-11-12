@@ -92,7 +92,7 @@ def excluir(evento_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/upload", response_model=UploadOut, tags=["Upload"])
-async def upload_imagem(request: Request, arquivo: UploadFile = File(...)):
+async def upload_imagem(request: Request, arquivo: UploadFile = File(...), db: Session = Depends(get_db)):
     """Recebe a foto (câmera ou galeria) e devolve a URL pública para usar em `imagem_url`."""
-    url = await salvar_imagem(arquivo, str(request.base_url))
+    url = await salvar_imagem(arquivo, str(request.base_url), db)
     return UploadOut(url=url)
