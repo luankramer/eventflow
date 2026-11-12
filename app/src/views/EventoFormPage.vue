@@ -130,7 +130,7 @@
         </section>
 
         <section class="bloco">
-          <h2><ion-icon :icon="cashOutline" /> Ingresso</h2>
+          <h2><ion-icon :icon="cashOutline" /> Preço</h2>
           <div class="preco-linha">
             <ion-input id="preco" v-model="form.preco" fill="outline" inputmode="decimal" placeholder="0,00">
               <span slot="start" class="prefixo">R$</span>

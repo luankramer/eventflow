@@ -52,6 +52,10 @@
           </a>
           </p>
         </form>
+
+        <button type="button" class="sem-login" @click="verSemEntrar">
+          Ver eventos sem entrar <ion-icon :icon="arrowForward" />
+        </button>
       </div>
     </ion-content>
   </ion-page>
@@ -59,13 +63,17 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { IonButton, IonContent, IonIcon, IonInput, IonInputPasswordToggle, IonPage, IonSpinner, toastController, useIonRouter } from '@ionic/vue'
-import { ticket } from 'ionicons/icons'
+import { arrowForward, ticket } from 'ionicons/icons'
 import { api } from '@/services/api'
 import { salvarSessao } from '@/services/sessao'
 import { avisar, avisarErro } from '@/services/avisos'
 
 const ionRouter = useIonRouter()
+const route = useRoute()
+// Para onde ir depois de entrar (ex.: o usuário tocou em "Cadastrar evento" sem estar logado)
+const destino = () => (typeof route.query.voltar === 'string' && route.query.voltar.startsWith('/') ? route.query.voltar : '/tabs/eventos')
 const modoCadastro = ref(false)
 const nome = ref('')
 const email = ref('')
@@ -85,12 +93,16 @@ async function enviar() {
     await salvarSessao(resposta.access_token, resposta.usuario)
     toastController.dismiss().catch(() => {}) // fecha avisos de erro anteriores
     senha.value = ''
-    ionRouter.navigate('/tabs/eventos', 'root', 'replace')
+    ionRouter.navigate(destino(), 'root', 'replace')
   } catch (erro) {
     avisarErro(erro)
   } finally {
     carregando.value = false
   }
+}
+
+function verSemEntrar() {
+  ionRouter.navigate('/tabs/eventos', 'root', 'replace')
 }
 </script>
 
@@ -195,6 +207,20 @@ async function enviar() {
   color: var(--ion-color-medium);
   margin: 6px 0 0;
   font-size: 14px;
+}
+.sem-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 18px auto 0;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: 700 14px/1 var(--ef-fonte);
+  cursor: pointer;
 }
 .alternar a {
   color: var(--ef-pitaya);

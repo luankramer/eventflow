@@ -37,10 +37,24 @@ def test_health(client):
     assert r.json()["banco"] == "ok"
 
 
-def test_rotas_protegidas_sem_token(client):
-    for rota in ["/eventos", "/categorias", "/locais", "/auth/me"]:
-        assert client.get(rota).status_code == 401
-    assert client.get("/eventos", headers={"Authorization": "Bearer token-falso"}).status_code == 401
+def test_leitura_publica_e_escrita_protegida(client):
+    # Qualquer pessoa vê os eventos, categorias e locais (o app abre já mostrando os eventos)
+    for rota in ["/eventos", "/categorias", "/locais"]:
+        assert client.get(rota).status_code == 200
+    assert client.get("/eventos/999").status_code == 404
+    # Cadastrar, editar, excluir, enviar imagem e ver o perfil exigem login
+    assert client.get("/auth/me").status_code == 401
+    assert client.post("/categorias", json={"nome": "Sem login"}).status_code == 401
+    assert client.put("/categorias/1", json={"nome": "Sem login"}).status_code == 401
+    assert client.delete("/categorias/1").status_code == 401
+    assert client.post("/locais", json={"nome": "X", "latitude": 0, "longitude": 0}).status_code == 401
+    assert client.delete("/locais/1").status_code == 401
+    assert client.post("/eventos", json={}).status_code == 401
+    assert client.put("/eventos/1", json={}).status_code == 401
+    assert client.delete("/eventos/1").status_code == 401
+    assert client.post("/upload").status_code == 401
+    falso = {"Authorization": "Bearer token-falso"}
+    assert client.post("/categorias", json={"nome": "Token falso"}, headers=falso).status_code == 401
 
 
 def test_login_logout_e_perfil(client, auth):

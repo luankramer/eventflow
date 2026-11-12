@@ -68,7 +68,7 @@ import { Geolocation } from '@capacitor/geolocation'
 import { api } from '@/services/api'
 import { voltarPara } from '@/services/navegacao'
 import { avisar, avisarErro, avisarSucesso, confirmar } from '@/services/avisos'
-import { CENTRO_PADRAO, criarMapa, iconePino, L } from '@/services/mapa'
+import { CENTRO_PADRAO, aoFalharGoogle, criarMapa } from '@/services/mapa'
 
 const route = useRoute()
 const ionRouter = useIonRouter()
@@ -94,15 +94,16 @@ function definirPosicao(lat, lng, centralizar = true) {
   form.longitude = lng.toFixed(6)
   if (!mapa) return
   if (!marcador) {
-    marcador = L.marker([lat, lng], { icon: iconePino(), draggable: true }).addTo(mapa)
-    marcador.on('dragend', () => {
-      const p = marcador.getLatLng()
-      definirPosicao(p.lat, p.lng, false)
+    marcador = mapa.marcador({
+      lat,
+      lng,
+      arrastavel: true,
+      aoArrastar: (la, ln) => definirPosicao(la, ln, false),
     })
   } else {
-    marcador.setLatLng([lat, lng])
+    marcador.mover(lat, lng)
   }
-  if (centralizar) mapa.setView([lat, lng], Math.max(mapa.getZoom(), 15))
+  if (centralizar) mapa.centralizar(lat, lng, Math.max(mapa.zoom(), 15))
 }
 
 function sincronizarMarcador() {
@@ -112,12 +113,26 @@ function sincronizarMarcador() {
   definirPosicao(lat, lng)
 }
 
-function iniciarMapa() {
-  if (mapa || !elementoMapa.value) return
-  mapa = criarMapa(elementoMapa.value, { zoom: 13 })
-  mapa.on('click', (e) => definirPosicao(e.latlng.lat, e.latlng.lng, false))
-  sincronizarMarcador()
+let montando = false
+async function iniciarMapa() {
+  if (mapa || montando || !elementoMapa.value) return
+  montando = true
+  try {
+    mapa = await criarMapa(elementoMapa.value, { zoom: 13 })
+    mapa.aoClicar((lat, lng) => definirPosicao(lat, lng, false))
+    marcador = null
+    sincronizarMarcador()
+  } finally {
+    montando = false
+  }
 }
+
+// Se a chave do Google for recusada, refaz o mapa com OpenStreetMap.
+const pararDeOuvir = aoFalharGoogle(() => {
+  mapa?.destruir()
+  mapa = null
+  iniciarMapa()
+})
 
 async function usarMinhaLocalizacao() {
   localizando.value = true
@@ -147,13 +162,16 @@ onMounted(async () => {
   }
 })
 
-onIonViewDidEnter(() => {
-  iniciarMapa()
-  mapa?.invalidateSize()
-  if (!marcador && !id) mapa?.setView(CENTRO_PADRAO, 13)
+onIonViewDidEnter(async () => {
+  await iniciarMapa()
+  mapa?.atualizarTamanho()
+  if (!marcador && !id) mapa?.centralizar(CENTRO_PADRAO[0], CENTRO_PADRAO[1], 13)
 })
 
-onBeforeUnmount(() => mapa?.remove())
+onBeforeUnmount(() => {
+  pararDeOuvir()
+  mapa?.destruir()
+})
 
 async function salvar() {
   const latitude = numero(form.latitude)

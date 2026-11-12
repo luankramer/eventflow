@@ -10,7 +10,7 @@ from ..schemas import EventoIn, EventoOut, UploadOut
 from ..security import usuario_atual
 from ..storage import salvar_imagem
 
-router = APIRouter(tags=["Eventos"], dependencies=[Depends(usuario_atual)])
+router = APIRouter(tags=["Eventos"])
 
 
 def _buscar(db: Session, evento_id: int) -> Evento:
@@ -65,7 +65,7 @@ def detalhar(evento_id: int, db: Session = Depends(get_db)):
     return _buscar(db, evento_id)
 
 
-@router.post("/eventos", response_model=EventoOut, status_code=status.HTTP_201_CREATED)
+@router.post("/eventos", response_model=EventoOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(usuario_atual)])
 def criar(dados: EventoIn, db: Session = Depends(get_db), usuario: Usuario = Depends(usuario_atual)):
     _validar_relacoes(db, dados)
     evento = Evento(criado_por_id=usuario.id)
@@ -75,7 +75,7 @@ def criar(dados: EventoIn, db: Session = Depends(get_db), usuario: Usuario = Dep
     return _buscar(db, evento.id)
 
 
-@router.put("/eventos/{evento_id}", response_model=EventoOut)
+@router.put("/eventos/{evento_id}", response_model=EventoOut, dependencies=[Depends(usuario_atual)])
 def editar(evento_id: int, dados: EventoIn, db: Session = Depends(get_db)):
     evento = _buscar(db, evento_id)
     _validar_relacoes(db, dados)
@@ -85,13 +85,13 @@ def editar(evento_id: int, dados: EventoIn, db: Session = Depends(get_db)):
     return _buscar(db, evento_id)
 
 
-@router.delete("/eventos/{evento_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/eventos/{evento_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(usuario_atual)])
 def excluir(evento_id: int, db: Session = Depends(get_db)):
     db.delete(_buscar(db, evento_id))
     db.commit()
 
 
-@router.post("/upload", response_model=UploadOut, tags=["Upload"])
+@router.post("/upload", response_model=UploadOut, tags=["Upload"], dependencies=[Depends(usuario_atual)])
 async def upload_imagem(request: Request, arquivo: UploadFile = File(...), db: Session = Depends(get_db)):
     """Recebe a foto (câmera ou galeria) e devolve a URL pública para usar em `imagem_url`."""
     url = await salvar_imagem(arquivo, str(request.base_url), db)

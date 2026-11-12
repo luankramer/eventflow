@@ -7,6 +7,7 @@
 
       <header class="hero">
         <span class="luz-ipe" />
+        <router-link v-if="!sessao.token" to="/login" class="entrar"><ion-icon :icon="personCircle" /> Entrar</router-link>
         <p class="saudacao">Olá, {{ primeiroNome }}</p>
         <h1>Encontre seu próximo evento</h1>
       </header>
@@ -82,7 +83,7 @@ import {
   IonContent, IonFab, IonFabButton, IonIcon, IonPage, IonRefresher, IonRefresherContent,
   IonSearchbar, IonSkeletonText, onIonViewWillEnter, useIonRouter,
 } from '@ionic/vue'
-import { add, apps, searchOutline, ticketOutline } from 'ionicons/icons'
+import { add, apps, personCircle, searchOutline, ticketOutline } from 'ionicons/icons'
 import EventoCard from '@/components/EventoCard.vue'
 import DestaqueCard from '@/components/DestaqueCard.vue'
 import { api } from '@/services/api'
@@ -149,6 +150,25 @@ onIonViewWillEnter(() => {
 <style scoped>
 .hero {
   padding-bottom: 54px;
+}
+.entrar {
+  position: absolute;
+  top: calc(var(--ion-safe-area-top, 0px) + 16px);
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+}
+.entrar ion-icon {
+  font-size: 20px;
 }
 .saudacao {
   font-weight: 600;

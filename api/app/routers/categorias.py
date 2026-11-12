@@ -7,7 +7,7 @@ from ..models import Categoria, Evento
 from ..schemas import CategoriaIn, CategoriaOut
 from ..security import usuario_atual
 
-router = APIRouter(prefix="/categorias", tags=["Categorias"], dependencies=[Depends(usuario_atual)])
+router = APIRouter(prefix="/categorias", tags=["Categorias"])
 
 
 def _buscar(db: Session, categoria_id: int) -> Categoria:
@@ -35,7 +35,7 @@ def detalhar(categoria_id: int, db: Session = Depends(get_db)):
     return _buscar(db, categoria_id)
 
 
-@router.post("", response_model=CategoriaOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CategoriaOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(usuario_atual)])
 def criar(dados: CategoriaIn, db: Session = Depends(get_db)):
     _checar_nome_unico(db, dados.nome)
     categoria = Categoria(**dados.model_dump())
@@ -45,7 +45,7 @@ def criar(dados: CategoriaIn, db: Session = Depends(get_db)):
     return categoria
 
 
-@router.put("/{categoria_id}", response_model=CategoriaOut)
+@router.put("/{categoria_id}", response_model=CategoriaOut, dependencies=[Depends(usuario_atual)])
 def editar(categoria_id: int, dados: CategoriaIn, db: Session = Depends(get_db)):
     categoria = _buscar(db, categoria_id)
     _checar_nome_unico(db, dados.nome, ignorar_id=categoria_id)
@@ -56,7 +56,7 @@ def editar(categoria_id: int, dados: CategoriaIn, db: Session = Depends(get_db))
     return categoria
 
 
-@router.delete("/{categoria_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{categoria_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(usuario_atual)])
 def excluir(categoria_id: int, db: Session = Depends(get_db)):
     categoria = _buscar(db, categoria_id)
     if db.scalar(select(func.count()).select_from(Evento).where(Evento.categoria_id == categoria_id)):

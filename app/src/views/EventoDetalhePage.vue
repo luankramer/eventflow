@@ -4,7 +4,7 @@
       <!-- botões flutuantes sobre a capa -->
       <div class="barra-flutuante">
         <ion-back-button default-href="/tabs/eventos" text="" class="botao-vidro" />
-        <ion-button v-if="evento" class="botao-vidro editar" :router-link="`/eventos/${evento.id}/editar`">
+        <ion-button v-if="evento && logado" class="botao-vidro editar" :router-link="`/eventos/${evento.id}/editar`">
           <ion-icon slot="start" :icon="createOutline" /> Editar
         </ion-button>
       </div>
@@ -66,10 +66,13 @@
                   <small>{{ evento.local.latitude.toFixed(5) }}, {{ evento.local.longitude.toFixed(5) }}</small>
                 </div>
               </div>
+              <a class="como-chegar" :href="linkRota" target="_blank" rel="noopener">
+                <ion-icon :icon="navigate" /> Como chegar <span>abre no Google Maps</span>
+              </a>
             </div>
           </section>
 
-          <ion-button expand="block" fill="clear" color="danger" class="excluir" @click="excluir">
+          <ion-button v-if="logado" expand="block" fill="clear" color="danger" class="excluir" @click="excluir">
             <ion-icon slot="start" :icon="trashOutline" /> Excluir evento
           </ion-button>
         </div>
@@ -85,13 +88,14 @@ import {
   IonBackButton, IonButton, IonContent, IonIcon, IonPage, IonSpinner,
   onIonViewDidEnter, onIonViewWillEnter, useIonRouter,
 } from '@ionic/vue'
-import { createOutline, location, trashOutline } from 'ionicons/icons'
+import { createOutline, location, navigate, trashOutline } from 'ionicons/icons'
 import CapaEvento from '@/components/CapaEvento.vue'
 import { api } from '@/services/api'
 import { avisarErro, avisarSucesso, confirmar } from '@/services/avisos'
-import { criarMapa, iconePino, L } from '@/services/mapa'
 import { formatarDataLonga, formatarHora, formatarPreco, partesData } from '@/services/formato'
 import { corCategoria, iconeCategoria } from '@/services/cores'
+import { estaLogado } from '@/services/sessao'
+import { aoFalharGoogle, criarMapa, linkRotaGoogleMaps } from '@/services/mapa'
 
 const route = useRoute()
 const ionRouter = useIonRouter()
@@ -103,19 +107,28 @@ let mapa = null
 const cor = computed(() => corCategoria(evento.value?.categoria))
 const icone = computed(() => iconeCategoria(evento.value?.categoria))
 const data = computed(() => partesData(evento.value.data))
+const logado = computed(() => estaLogado())
+const linkRota = computed(() => linkRotaGoogleMaps(evento.value.local.latitude, evento.value.local.longitude))
 
-function desenharMapa() {
+async function desenharMapa() {
   if (!evento.value || !elementoMapa.value) return
-  const pos = [evento.value.local.latitude, evento.value.local.longitude]
+  const { latitude: lat, longitude: lng } = evento.value.local
   if (!mapa) {
-    mapa = criarMapa(elementoMapa.value, { centro: pos, zoom: 15, interativo: false })
+    mapa = await criarMapa(elementoMapa.value, { centro: [lat, lng], zoom: 15, interativo: false })
   } else {
-    mapa.setView(pos, 15)
-    mapa.eachLayer((l) => l instanceof L.Marker && mapa.removeLayer(l))
+    mapa.centralizar(lat, lng, 15)
   }
-  L.marker(pos, { icon: iconePino({ cor: cor.value.cor }) }).addTo(mapa)
-  mapa.invalidateSize()
+  mapa.limpar()
+  mapa.marcador({ lat, lng, cor: cor.value.cor })
+  mapa.atualizarTamanho()
 }
+
+// Se a chave do Google for recusada, refaz o mapa com OpenStreetMap.
+const pararDeOuvir = aoFalharGoogle(() => {
+  mapa?.destruir()
+  mapa = null
+  desenharMapa()
+})
 
 async function carregar() {
   carregando.value = true
@@ -144,8 +157,11 @@ async function excluir() {
 }
 
 onIonViewWillEnter(carregar)
-onIonViewDidEnter(() => mapa?.invalidateSize())
-onBeforeUnmount(() => mapa?.remove())
+onIonViewDidEnter(() => mapa?.atualizarTamanho())
+onBeforeUnmount(() => {
+  pararDeOuvir()
+  mapa?.destruir()
+})
 </script>
 
 <style scoped>
@@ -347,6 +363,29 @@ h1 {
   font-size: 12px;
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
+}
+.como-chegar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 16px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: var(--ef-noite);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+}
+.como-chegar ion-icon {
+  font-size: 18px;
+  color: var(--ef-ipe);
+}
+.como-chegar span {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.7;
 }
 .excluir {
   margin-top: 22px;

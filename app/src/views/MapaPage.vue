@@ -81,7 +81,7 @@ import CapaEvento from '@/components/CapaEvento.vue'
 import { corCategoria } from '@/services/cores'
 import { api } from '@/services/api'
 import { avisarErro } from '@/services/avisos'
-import { criarMapa, iconePino, L } from '@/services/mapa'
+import { aoFalharGoogle, criarMapa } from '@/services/mapa'
 import { formatarData, formatarHora, formatarPreco } from '@/services/formato'
 
 const ionRouter = useIonRouter()
@@ -113,8 +113,7 @@ const selecionado = ref(null)
 const carregando = ref(true)
 
 let mapa = null
-let camada = null
-const marcadores = new Map()
+let montando = false
 
 // Cor do pino: categoria do próximo evento daquele local.
 const corGrupo = (g) => corCategoria(g.eventos[0]?.categoria).cor
@@ -132,27 +131,23 @@ function agruparPorLocal(eventos) {
 
 function desenharMarcadores() {
   if (!mapa) return
-  camada.clearLayers()
-  marcadores.clear()
+  mapa.limpar()
   for (const g of grupos.value) {
-    const ativo = selecionado.value?.local.id === g.local.id
-    const m = L.marker([g.local.latitude, g.local.longitude], {
-      icon: iconePino({ quantidade: g.eventos.length, selecionado: ativo, cor: corGrupo(g) }),
-      title: g.local.nome,
+    mapa.marcador({
+      lat: g.local.latitude,
+      lng: g.local.longitude,
+      cor: corGrupo(g),
+      quantidade: g.eventos.length,
+      selecionado: selecionado.value?.local.id === g.local.id,
+      aoClicar: () => selecionar(g),
     })
-    m.on('click', (ev) => {
-      L.DomEvent.stopPropagation(ev)
-      selecionar(g)
-    })
-    m.addTo(camada)
-    marcadores.set(g.local.id, m)
   }
 }
 
 function selecionar(grupo) {
   selecionado.value = grupo
   desenharMarcadores()
-  mapa.panTo([grupo.local.latitude, grupo.local.longitude], { animate: true })
+  mapa.deslizar(grupo.local.latitude, grupo.local.longitude)
 }
 
 function fechar() {
@@ -162,8 +157,7 @@ function fechar() {
 
 function enquadrar() {
   if (!mapa || !grupos.value.length) return
-  const limites = L.latLngBounds(grupos.value.map((g) => [g.local.latitude, g.local.longitude]))
-  mapa.fitBounds(limites, { padding: [60, 60], maxZoom: 15 })
+  mapa.enquadrar(grupos.value.map((g) => [g.local.latitude, g.local.longitude]), { margem: 70, zoomMax: 15 })
 }
 
 async function carregar() {
@@ -191,20 +185,34 @@ onIonViewWillEnter(() => {
   carregar()
 })
 
-// O Leaflet precisa que o elemento já esteja visível para calcular o tamanho.
-onIonViewDidEnter(() => {
-  if (!mapa) {
-    mapa = criarMapa(elementoMapa.value)
-    camada = L.layerGroup().addTo(mapa)
-    mapa.on('click', fechar)
+async function montarMapa() {
+  if (montando) return
+  montando = true
+  try {
+    mapa?.destruir()
+    mapa = await criarMapa(elementoMapa.value)
+    mapa.aoClicar(fechar)
     desenharMarcadores()
     enquadrar()
+  } finally {
+    montando = false
   }
-  mapa.invalidateSize()
+}
+
+// Se a chave do Google for recusada, refaz o mapa com OpenStreetMap.
+const pararDeOuvir = aoFalharGoogle(() => {
+  montarMapa() // apaga o mapa do Google e cria o do OpenStreetMap no lugar
+})
+
+// O mapa precisa que o elemento já esteja visível para calcular o tamanho.
+onIonViewDidEnter(() => {
+  if (!mapa) montarMapa()
+  else mapa.atualizarTamanho()
 })
 
 onBeforeUnmount(() => {
-  mapa?.remove()
+  pararDeOuvir()
+  mapa?.destruir()
   mapa = null
 })
 </script>

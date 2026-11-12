@@ -3,12 +3,25 @@
     <ion-content>
       <header class="hero perfil">
         <span class="luz-ipe" />
-        <div class="avatar"><span>{{ iniciais(usuario?.nome) }}</span></div>
-        <h1>{{ usuario?.nome }}</h1>
-        <p>{{ usuario?.email }}</p>
+        <div class="avatar">
+          <span v-if="usuario">{{ iniciais(usuario.nome) }}</span>
+          <span v-else><ion-icon :icon="person" /></span>
+        </div>
+        <h1>{{ usuario ? usuario.nome : 'Visitante' }}</h1>
+        <p>{{ usuario ? usuario.email : 'Você está vendo os eventos sem entrar.' }}</p>
       </header>
 
-      <div class="conteudo">
+      <div v-if="!usuario" class="conteudo">
+        <section class="convite cartao">
+          <h2>Entre para organizar eventos</h2>
+          <p>Com uma conta você cadastra e edita eventos, categorias e locais.</p>
+          <ion-button expand="block" class="botao-grande" router-link="/login?voltar=/tabs/perfil">
+            <ion-icon slot="start" :icon="logInOutline" /> Entrar ou criar conta
+          </ion-button>
+        </section>
+      </div>
+
+      <div v-else class="conteudo">
       <h2 class="titulo-secao">Seus dados</h2>
       <ion-list class="lista-cartao" lines="full">
         <ion-item>
@@ -47,7 +60,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
-import { idCardOutline, logOutOutline, mailOutline, personOutline } from 'ionicons/icons'
+import { idCardOutline, logInOutline, logOutOutline, mailOutline, person, personOutline } from 'ionicons/icons'
 import { api, API_URL } from '@/services/api'
 import { atualizarUsuario, limparSessao, sessao } from '@/services/sessao'
 import { confirmar } from '@/services/avisos'
@@ -59,7 +72,7 @@ const saindo = ref(false)
 
 // Busca os dados atualizados do usuário logado na API.
 onIonViewWillEnter(() => {
-  api.eu().then(atualizarUsuario).catch(() => {})
+  if (sessao.token) api.eu().then(atualizarUsuario).catch(() => {})
 })
 
 async function sair() {
@@ -102,6 +115,26 @@ async function sair() {
   font-weight: 800;
   color: #fff;
   letter-spacing: -1px;
+}
+.avatar ion-icon {
+  font-size: 40px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.convite {
+  margin-top: 20px;
+  padding: 22px 18px 18px;
+  text-align: center;
+}
+.convite h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.convite p {
+  margin: 0 0 18px;
+  color: var(--ion-color-medium);
+  font-size: 15px;
 }
 .perfil h1 {
   font-size: 26px;

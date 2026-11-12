@@ -7,7 +7,7 @@ from ..models import Evento, Local
 from ..schemas import LocalIn, LocalOut
 from ..security import usuario_atual
 
-router = APIRouter(prefix="/locais", tags=["Locais"], dependencies=[Depends(usuario_atual)])
+router = APIRouter(prefix="/locais", tags=["Locais"])
 
 
 def _buscar(db: Session, local_id: int) -> Local:
@@ -27,7 +27,7 @@ def detalhar(local_id: int, db: Session = Depends(get_db)):
     return _buscar(db, local_id)
 
 
-@router.post("", response_model=LocalOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=LocalOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(usuario_atual)])
 def criar(dados: LocalIn, db: Session = Depends(get_db)):
     local = Local(**dados.model_dump())
     db.add(local)
@@ -36,7 +36,7 @@ def criar(dados: LocalIn, db: Session = Depends(get_db)):
     return local
 
 
-@router.put("/{local_id}", response_model=LocalOut)
+@router.put("/{local_id}", response_model=LocalOut, dependencies=[Depends(usuario_atual)])
 def editar(local_id: int, dados: LocalIn, db: Session = Depends(get_db)):
     local = _buscar(db, local_id)
     for campo, valor in dados.model_dump().items():
@@ -46,7 +46,7 @@ def editar(local_id: int, dados: LocalIn, db: Session = Depends(get_db)):
     return local
 
 
-@router.delete("/{local_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{local_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(usuario_atual)])
 def excluir(local_id: int, db: Session = Depends(get_db)):
     local = _buscar(db, local_id)
     if db.scalar(select(func.count()).select_from(Evento).where(Evento.local_id == local_id)):
