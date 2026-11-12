@@ -2,8 +2,8 @@
 #
 # - A cada push que altera a pasta app/, o APK fica disponível na aba "Actions"
 #   (abra a execução e baixe "EventFlow-apk" em Artifacts).
-# - Ao criar uma tag (ex.: v1.0), o APK também é publicado em "Releases",
-#   com um link fixo para entregar ao professor.
+# - Ao publicar uma Release no GitHub (Releases > Draft a new release, tag v1.0),
+#   o APK é anexado a ela, com um link fixo para entregar ao professor.
 #
 # A URL da API vem do arquivo app/.env.production (VITE_API_URL=...).
 # Opcional: a variável de repositório API_URL (Settings > Secrets and variables > Actions > Variables)
@@ -14,7 +14,8 @@ on:
   push:
     branches: [main, master]
     paths: ['app/**', '.github/workflows/apk.yml']
-    tags: ['v*']
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -83,8 +84,8 @@ jobs:
           name: EventFlow-apk
           path: EventFlow.apk
 
-      - name: Publicar na Release (apenas em tags v*)
-        if: env.PULAR != 'true' && startsWith(github.ref, 'refs/tags/v')
+      - name: Anexar o APK à Release
+        if: env.PULAR != 'true' && github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: EventFlow.apk

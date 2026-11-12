@@ -30,11 +30,8 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 3. **Render**: crie o Web Service apontando para o repositório, com **Root Directory** = `api`, runtime Docker, instância Free, e cadastre as variáveis de ambiente, incluindo `SEED_DEMO=true` para criar os dados de exemplo. Detalhes no [README da API](api/README.md#3-render-api).
 4. **URL da API no app**: coloque a URL do Render em `app/.env.production` (ex.: `VITE_API_URL=https://eventflow-vnl4.onrender.com`, sem barra no final) e faça o push.
 5. **APK**: o push do passo 4 dispara o workflow **Gerar APK**. Em uns 5 minutos, o APK aparece em **Actions → Gerar APK → Artifacts**.
-6. **Versão de entrega**: crie uma tag para publicar o APK em **Releases** com link fixo:
-   ```bash
-   git tag v1.0
-   git push origin v1.0
-   ```
+6. **Versão de entrega**: no GitHub, vá em **Releases → Draft a new release**, crie a tag `v1.0` e clique em
+   **Publish release**. O workflow anexa o `EventFlow.apk` à release em uns 5 minutos, com um link fixo para entregar.
 
 O workflow **Manter online** chama `/health` a cada 10 minutos, para a API e o banco não hibernarem.
 Ele começa a funcionar sozinho assim que a URL do passo 4 estiver no repositório.
