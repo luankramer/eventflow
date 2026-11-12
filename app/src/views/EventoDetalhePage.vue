@@ -4,7 +4,7 @@
       <!-- botões flutuantes sobre a capa -->
       <div class="barra-flutuante">
         <ion-back-button default-href="/tabs/eventos" text="" class="botao-vidro" />
-        <ion-button v-if="evento && logado" class="botao-vidro editar" :router-link="`/eventos/${evento.id}/editar`">
+        <ion-button v-if="evento && podeAlterar" class="botao-vidro editar" :router-link="`/eventos/${evento.id}/editar`">
           <ion-icon slot="start" :icon="createOutline" /> Editar
         </ion-button>
       </div>
@@ -72,7 +72,7 @@
             </div>
           </section>
 
-          <ion-button v-if="logado" expand="block" fill="clear" color="danger" class="excluir" @click="excluir">
+          <ion-button v-if="podeAlterar" expand="block" fill="clear" color="danger" class="excluir" @click="excluir">
             <ion-icon slot="start" :icon="trashOutline" /> Excluir evento
           </ion-button>
         </div>
@@ -94,7 +94,7 @@ import { api } from '@/services/api'
 import { avisarErro, avisarSucesso, confirmar } from '@/services/avisos'
 import { formatarDataLonga, formatarHora, formatarPreco, partesData } from '@/services/formato'
 import { corCategoria, iconeCategoria } from '@/services/cores'
-import { estaLogado } from '@/services/sessao'
+import { estaLogado, sessao } from '@/services/sessao'
 import { aoFalharGoogle, criarMapa, linkRotaGoogleMaps } from '@/services/mapa'
 
 const route = useRoute()
@@ -107,7 +107,8 @@ let mapa = null
 const cor = computed(() => corCategoria(evento.value?.categoria))
 const icone = computed(() => iconeCategoria(evento.value?.categoria))
 const data = computed(() => partesData(evento.value.data))
-const logado = computed(() => estaLogado())
+// Editar e excluir só aparecem para quem cadastrou o evento (a API também confere).
+const podeAlterar = computed(() => estaLogado() && evento.value?.criado_por_id === sessao.usuario?.id)
 const linkRota = computed(() => linkRotaGoogleMaps(evento.value.local.latitude, evento.value.local.longitude))
 
 async function desenharMapa() {

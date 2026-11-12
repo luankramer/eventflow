@@ -1,6 +1,15 @@
 from datetime import date, time
+from typing import Annotated
+
+from fastapi import Path as ParametroCaminho
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+
+# Maior inteiro que o Postgres guarda numa coluna INTEGER.
+ID_MAXIMO = 2_147_483_647
+# Id vindo na URL: positivo e dentro do limite (evita erro 500 com números gigantes).
+Id = Annotated[int, ParametroCaminho(ge=1, le=ID_MAXIMO)]
 
 
 class Orm(BaseModel):
@@ -19,10 +28,18 @@ class RegistroIn(BaseModel):
     email: EmailStr
     senha: str = Field(min_length=6, max_length=72)
 
+    @field_validator("senha")
+    @classmethod
+    def limite_bcrypt(cls, v: str) -> str:
+        # O bcrypt só aceita até 72 bytes; letras com acento ocupam 2 bytes.
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("A senha pode ter no máximo 72 bytes (menos caracteres se tiver acentos).")
+        return v
+
 
 class LoginIn(BaseModel):
     email: EmailStr
-    senha: str = Field(min_length=1)
+    senha: str = Field(min_length=1, max_length=200)
 
 
 class TokenOut(BaseModel):
@@ -34,7 +51,7 @@ class TokenOut(BaseModel):
 # ---------- Categoria ----------
 class CategoriaIn(BaseModel):
     nome: str = Field(min_length=2, max_length=80)
-    descricao: str | None = None
+    descricao: str | None = Field(default=None, max_length=500)
     cor: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Cor em hexadecimal, ex.: #E8175D")
     icone: str | None = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$", description="Nome do ícone, ex.: musica")
 
@@ -76,17 +93,18 @@ class LocalOut(Orm):
 # ---------- Evento ----------
 class EventoIn(BaseModel):
     nome: str = Field(min_length=2, max_length=150)
-    descricao: str | None = None
+    descricao: str | None = Field(default=None, max_length=5000)
     data: date
     hora: time
-    preco: float = Field(ge=0)
-    categoria_id: int
-    local_id: int
-    imagem_url: str | None = Field(default=None, max_length=500)
+    preco: float = Field(ge=0, le=1_000_000)
+    categoria_id: int = Field(gt=0, le=ID_MAXIMO)
+    local_id: int = Field(gt=0, le=ID_MAXIMO)
+    imagem_url: str | None = Field(default=None, max_length=500, pattern=r"^https?://")
 
 
 class EventoOut(Orm):
     id: int
+    criado_por_id: int | None = None
     nome: str
     descricao: str | None = None
     data: date

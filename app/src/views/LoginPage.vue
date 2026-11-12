@@ -4,8 +4,7 @@
       <div class="luzes" aria-hidden="true"><span /><span /><span /></div>
       <div class="login respeita-status">
         <div class="marca">
-          <div class="logo"><ion-icon :icon="ticket" /></div>
-          <span class="nome-app">EventFlow</span>
+          <MarcaEventFlow class="logo" :tamanho="64" clara />
           <h1>{{ modoCadastro ? 'Crie sua conta e comece a organizar' : 'Shows, feiras e festas num só lugar' }}</h1>
         </div>
 
@@ -65,7 +64,8 @@
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonButton, IonContent, IonIcon, IonInput, IonInputPasswordToggle, IonPage, IonSpinner, toastController, useIonRouter } from '@ionic/vue'
-import { arrowForward, ticket } from 'ionicons/icons'
+import { arrowForward } from 'ionicons/icons'
+import MarcaEventFlow from '@/components/MarcaEventFlow.vue'
 import { api } from '@/services/api'
 import { salvarSessao } from '@/services/sessao'
 import { avisar, avisarErro } from '@/services/avisos'
@@ -155,28 +155,8 @@ function verSemEntrar() {
   padding: 0 6px 26px;
 }
 .logo {
-  width: 58px;
-  height: 58px;
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(140deg, #ff3d7f, var(--ef-pitaya) 50%, var(--ef-acai));
-  box-shadow: 0 12px 28px rgba(232, 23, 93, 0.45);
-  transform: rotate(-8deg);
-  margin-bottom: 22px;
-}
-.logo ion-icon {
-  font-size: 30px;
-  color: #fff;
-  transform: rotate(8deg);
-}
-.nome-app {
-  display: block;
-  font-family: var(--ef-fonte-titulo);
-  font-weight: 800;
-  font-size: 18px;
-  color: var(--ef-ipe);
-  margin-bottom: 6px;
+  margin: 0 0 18px -10px;
+  filter: drop-shadow(0 10px 22px rgba(232, 23, 93, 0.35));
 }
 .marca h1 {
   font-size: 38px;

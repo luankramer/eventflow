@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Categoria, Evento, Local, Usuario
-from ..schemas import EventoIn, EventoOut, UploadOut
+from ..schemas import ID_MAXIMO, EventoIn, EventoOut, Id, UploadOut
 from ..security import usuario_atual
 from ..storage import salvar_imagem
 
@@ -18,6 +18,12 @@ def _buscar(db: Session, evento_id: int) -> Evento:
     if evento is None:
         raise HTTPException(404, "Evento não encontrado.")
     return evento
+
+
+def _exigir_dono(evento: Evento, usuario: Usuario) -> None:
+    """Qualquer pessoa logada cria eventos, mas só quem criou pode editar ou excluir."""
+    if evento.criado_por_id != usuario.id:
+        raise HTTPException(403, "Só quem cadastrou este evento pode alterá-lo.")
 
 
 def _validar_relacoes(db: Session, dados: EventoIn) -> None:
@@ -36,20 +42,22 @@ def _aplicar(evento: Evento, dados: EventoIn) -> None:
 
 @router.get("/eventos", response_model=list[EventoOut])
 def listar(
-    busca: str | None = Query(None, description="Busca por nome, descrição, categoria ou local"),
-    categoria_id: int | None = None,
-    local_id: int | None = None,
+    busca: str | None = Query(None, max_length=100, description="Busca por nome, descrição, categoria ou local"),
+    categoria_id: int | None = Query(None, gt=0, le=ID_MAXIMO),
+    local_id: int | None = Query(None, gt=0, le=ID_MAXIMO),
     db: Session = Depends(get_db),
 ):
     consulta = select(Evento)
     if busca and busca.strip():
-        termo = f"%{busca.strip()}%"
+        # Parâmetro ligado pelo SQLAlchemy (nunca texto colado no SQL) e com % e _ escapados,
+        # para que a busca "50%" procure "50%" e não "qualquer coisa".
+        termo = busca.strip()
         consulta = consulta.where(
             or_(
-                Evento.nome.ilike(termo),
-                Evento.descricao.ilike(termo),
-                Evento.categoria.has(Categoria.nome.ilike(termo)),
-                Evento.local.has(Local.nome.ilike(termo)),
+                Evento.nome.icontains(termo, autoescape=True),
+                Evento.descricao.icontains(termo, autoescape=True),
+                Evento.categoria.has(Categoria.nome.icontains(termo, autoescape=True)),
+                Evento.local.has(Local.nome.icontains(termo, autoescape=True)),
             )
         )
     if categoria_id is not None:
@@ -61,11 +69,11 @@ def listar(
 
 
 @router.get("/eventos/{evento_id}", response_model=EventoOut)
-def detalhar(evento_id: int, db: Session = Depends(get_db)):
+def detalhar(evento_id: Id, db: Session = Depends(get_db)):
     return _buscar(db, evento_id)
 
 
-@router.post("/eventos", response_model=EventoOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(usuario_atual)])
+@router.post("/eventos", response_model=EventoOut, status_code=status.HTTP_201_CREATED)
 def criar(dados: EventoIn, db: Session = Depends(get_db), usuario: Usuario = Depends(usuario_atual)):
     _validar_relacoes(db, dados)
     evento = Evento(criado_por_id=usuario.id)
@@ -75,9 +83,10 @@ def criar(dados: EventoIn, db: Session = Depends(get_db), usuario: Usuario = Dep
     return _buscar(db, evento.id)
 
 
-@router.put("/eventos/{evento_id}", response_model=EventoOut, dependencies=[Depends(usuario_atual)])
-def editar(evento_id: int, dados: EventoIn, db: Session = Depends(get_db)):
+@router.put("/eventos/{evento_id}", response_model=EventoOut)
+def editar(evento_id: Id, dados: EventoIn, db: Session = Depends(get_db), usuario: Usuario = Depends(usuario_atual)):
     evento = _buscar(db, evento_id)
+    _exigir_dono(evento, usuario)
     _validar_relacoes(db, dados)
     _aplicar(evento, dados)
     db.commit()
@@ -85,9 +94,11 @@ def editar(evento_id: int, dados: EventoIn, db: Session = Depends(get_db)):
     return _buscar(db, evento_id)
 
 
-@router.delete("/eventos/{evento_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(usuario_atual)])
-def excluir(evento_id: int, db: Session = Depends(get_db)):
-    db.delete(_buscar(db, evento_id))
+@router.delete("/eventos/{evento_id}", status_code=status.HTTP_204_NO_CONTENT)
+def excluir(evento_id: Id, db: Session = Depends(get_db), usuario: Usuario = Depends(usuario_atual)):
+    evento = _buscar(db, evento_id)
+    _exigir_dono(evento, usuario)
+    db.delete(evento)
     db.commit()
 
 

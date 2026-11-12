@@ -26,16 +26,41 @@ EXTENSOES = {
 }
 
 
+def tipo_real(conteudo: bytes) -> str | None:
+    """Descobre o formato pelos primeiros bytes do arquivo (a "assinatura"), sem confiar
+    no tipo que o celular informou. Um HTML ou script renomeado para .png é recusado."""
+    if conteudo.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if conteudo.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if conteudo[:4] == b"RIFF" and conteudo[8:12] == b"WEBP":
+        return "image/webp"
+    if conteudo[4:8] == b"ftyp" and conteudo[8:12] in (b"heic", b"heix", b"hevc", b"heim", b"heis", b"mif1", b"msf1"):
+        return "image/heif" if conteudo[8:12] in (b"mif1", b"msf1") else "image/heic"
+    return None
+
+
+async def _ler_com_limite(arquivo: UploadFile, limite: int) -> bytes:
+    """Lê em pedaços e para assim que passar do limite, sem carregar o arquivo inteiro."""
+    partes, total = [], 0
+    while pedaco := await arquivo.read(256 * 1024):
+        total += len(pedaco)
+        if total > limite:
+            raise HTTPException(413, f"Imagem maior que {config.UPLOAD_MAX_MB} MB.")
+        partes.append(pedaco)
+    return b"".join(partes)
+
+
 async def salvar_imagem(arquivo: UploadFile, base_url: str, db: Session) -> str:
-    tipo = (arquivo.content_type or "").lower()
-    if tipo not in EXTENSOES:
+    if (arquivo.content_type or "").lower() not in EXTENSOES:
         raise HTTPException(400, "Envie uma imagem JPG, PNG, WEBP ou HEIC.")
 
-    conteudo = await arquivo.read()
+    conteudo = await _ler_com_limite(arquivo, config.UPLOAD_MAX_MB * 1024 * 1024)
     if not conteudo:
         raise HTTPException(400, "Arquivo vazio.")
-    if len(conteudo) > config.UPLOAD_MAX_MB * 1024 * 1024:
-        raise HTTPException(413, f"Imagem maior que {config.UPLOAD_MAX_MB} MB.")
+    tipo = tipo_real(conteudo)
+    if tipo is None:
+        raise HTTPException(400, "O arquivo não é uma imagem válida.")
 
     id_imagem = uuid.uuid4().hex
     nome = f"{id_imagem}.{EXTENSOES[tipo]}"

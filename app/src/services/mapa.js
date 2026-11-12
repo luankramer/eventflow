@@ -15,6 +15,9 @@ let carregandoGoogle = null
 
 // ---------------------------------------------------------------- pino (HTML/CSS em theme.css)
 function htmlPino({ cor = '#E8175D', quantidade = 0, selecionado = false } = {}) {
+  // O pino é montado como HTML: aceita só cor hexadecimal e número, nunca texto livre.
+  if (!/^#[0-9a-fA-F]{6}$/.test(cor)) cor = '#E8175D'
+  quantidade = Number.parseInt(quantidade, 10) || 0
   const badge = quantidade > 1 ? `<span class="pino-badge">${quantidade}</span>` : ''
   return `<div class="pino${selecionado ? ' pino-ativo' : ''}" style="--pino-cor:${cor}"><span class="pino-ponto"></span>${badge}</div>`
 }

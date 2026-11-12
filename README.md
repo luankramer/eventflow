@@ -1,3 +1,5 @@
+<p align="center"><img src="marca/png/logo-horizontal.png" alt="EventFlow" width="360"></p>
+
 # EventFlow
 
 Avaliação Final — **Desenvolvimento de Aplicativos** (UniNorte)
@@ -6,7 +8,7 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 
 | Parte | Tecnologias | Pasta |
 |---|---|---|
-| App | Vue 3, Vite, Ionic, Capacitor, Leaflet | [`app/`](app/README.md) |
+| App | Vue 3, Vite, Ionic, Capacitor, Google Maps (OpenStreetMap de reserva) | [`app/`](app/README.md) |
 | API | Python, FastAPI, SQLAlchemy, JWT | [`api/`](api/README.md) |
 | Banco e imagens | PostgreSQL (Supabase); as fotos ficam no próprio banco | — |
 | Hospedagem da API | Render (gratuito, sem cartão) | — |
@@ -22,6 +24,23 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 - **Categorias** (tipos de evento): listar, cadastrar, editar e excluir, com **cor e ícone** escolhidos no cadastro. Todo evento herda a cor da sua categoria, e o mapa mostra uma legenda
 - **Locais**: listar, cadastrar, editar e excluir, com latitude e longitude escolhidas no mapa ou pelo GPS
 - **Perfil** com os dados do usuário e botão **Sair**
+
+## Segurança
+
+A API passou por uma revisão de segurança com **34 testes de ataque automatizados**: força bruta, token falsificado, injeção de SQL, upload disfarçado, um usuário mexendo no evento de outro e outros. Os problemas encontrados foram corrigidos. Detalhes em [SEGURANCA.md](SEGURANCA.md).
+
+- Só quem cadastrou um evento pode editá-lo ou excluí-lo (403 para os demais)
+- Login bloqueado por 15 min após 5 senhas erradas (429)
+- Senhas com bcrypt, token JWT com validade, imagens conferidas pela assinatura do arquivo
+- APK de release (não depurável) e sem backup dos dados do app
+
+```bash
+cd api && pip install -r requirements.txt && pytest   # 38 testes
+```
+
+## Identidade visual
+
+O logo (pasta [`marca/`](marca)) é um pino de localização com um ingresso dentro, e um trajeto pontilhado chega até ele: **evento + mapa + fluxo**. As cores são as mesmas do app: pitaya `#E8175D`, ipê `#FFB800` e noite `#1E1036`.
 
 ## Colocando no ar (ordem)
 

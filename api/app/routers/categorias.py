@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Categoria, Evento
-from ..schemas import CategoriaIn, CategoriaOut
+from ..schemas import Id, CategoriaIn, CategoriaOut
 from ..security import usuario_atual
 
 router = APIRouter(prefix="/categorias", tags=["Categorias"])
@@ -31,7 +31,7 @@ def listar(db: Session = Depends(get_db)):
 
 
 @router.get("/{categoria_id}", response_model=CategoriaOut)
-def detalhar(categoria_id: int, db: Session = Depends(get_db)):
+def detalhar(categoria_id: Id, db: Session = Depends(get_db)):
     return _buscar(db, categoria_id)
 
 
@@ -46,7 +46,7 @@ def criar(dados: CategoriaIn, db: Session = Depends(get_db)):
 
 
 @router.put("/{categoria_id}", response_model=CategoriaOut, dependencies=[Depends(usuario_atual)])
-def editar(categoria_id: int, dados: CategoriaIn, db: Session = Depends(get_db)):
+def editar(categoria_id: Id, dados: CategoriaIn, db: Session = Depends(get_db)):
     categoria = _buscar(db, categoria_id)
     _checar_nome_unico(db, dados.nome, ignorar_id=categoria_id)
     for campo, valor in dados.model_dump().items():
@@ -57,7 +57,7 @@ def editar(categoria_id: int, dados: CategoriaIn, db: Session = Depends(get_db))
 
 
 @router.delete("/{categoria_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(usuario_atual)])
-def excluir(categoria_id: int, db: Session = Depends(get_db)):
+def excluir(categoria_id: Id, db: Session = Depends(get_db)):
     categoria = _buscar(db, categoria_id)
     if db.scalar(select(func.count()).select_from(Evento).where(Evento.categoria_id == categoria_id)):
         raise HTTPException(409, "Não é possível excluir: existem eventos nesta categoria.")

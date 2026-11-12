@@ -41,7 +41,7 @@ src/
     api.js             todas as chamadas à API (fetch + token JWT)
     sessao.js          sessão salva no aparelho (Capacitor Preferences)
     foto.js            câmera / galeria (Capacitor Camera)
-    mapa.js            mapa Leaflet + marcadores
+    mapa.js            mapa (Google Maps, com OpenStreetMap de reserva) + marcadores
     formato.js         datas e preços em pt-BR
   views/               uma tela por arquivo
   components/          EventoCard (item da lista)

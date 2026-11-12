@@ -7,6 +7,7 @@ _tmp = tempfile.mkdtemp()
 os.environ["DATABASE_URL"] = os.getenv("TEST_DATABASE_URL", f"sqlite:///{_tmp}/teste.db")
 os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SERVICE_KEY"] = ""
+os.environ.setdefault("JWT_SECRET", "chave-so-para-testes-" + "x" * 32)
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

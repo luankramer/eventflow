@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Evento, Local
-from ..schemas import LocalIn, LocalOut
+from ..schemas import Id, LocalIn, LocalOut
 from ..security import usuario_atual
 
 router = APIRouter(prefix="/locais", tags=["Locais"])
@@ -23,7 +23,7 @@ def listar(db: Session = Depends(get_db)):
 
 
 @router.get("/{local_id}", response_model=LocalOut)
-def detalhar(local_id: int, db: Session = Depends(get_db)):
+def detalhar(local_id: Id, db: Session = Depends(get_db)):
     return _buscar(db, local_id)
 
 
@@ -37,7 +37,7 @@ def criar(dados: LocalIn, db: Session = Depends(get_db)):
 
 
 @router.put("/{local_id}", response_model=LocalOut, dependencies=[Depends(usuario_atual)])
-def editar(local_id: int, dados: LocalIn, db: Session = Depends(get_db)):
+def editar(local_id: Id, dados: LocalIn, db: Session = Depends(get_db)):
     local = _buscar(db, local_id)
     for campo, valor in dados.model_dump().items():
         setattr(local, campo, valor)
@@ -47,7 +47,7 @@ def editar(local_id: int, dados: LocalIn, db: Session = Depends(get_db)):
 
 
 @router.delete("/{local_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(usuario_atual)])
-def excluir(local_id: int, db: Session = Depends(get_db)):
+def excluir(local_id: Id, db: Session = Depends(get_db)):
     local = _buscar(db, local_id)
     if db.scalar(select(func.count()).select_from(Evento).where(Evento.local_id == local_id)):
         raise HTTPException(409, "Não é possível excluir: existem eventos neste local.")

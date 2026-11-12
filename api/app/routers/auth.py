@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Usuario
 from ..schemas import LoginIn, RegistroIn, TokenOut, UsuarioOut
+from ..seguranca_login import limitador
 from ..security import criar_token, gerar_hash, usuario_atual, verificar_senha
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
@@ -23,10 +24,14 @@ def registrar(dados: RegistroIn, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenOut)
-def login(dados: LoginIn, db: Session = Depends(get_db)):
+def login(dados: LoginIn, request: Request, db: Session = Depends(get_db)):
+    ip = request.client.host if request.client else "desconhecido"
+    limitador.verificar(ip, dados.email)  # 429 depois de muitas senhas erradas
     usuario = db.scalar(select(Usuario).where(func.lower(Usuario.email) == dados.email.lower()))
     if usuario is None or not verificar_senha(dados.senha, usuario.senha_hash):
+        limitador.registrar_falha(ip, dados.email)
         raise HTTPException(401, "E-mail ou senha incorretos.")
+    limitador.registrar_sucesso(ip, dados.email)
     return TokenOut(access_token=criar_token(usuario.id), usuario=UsuarioOut.model_validate(usuario))
 
 

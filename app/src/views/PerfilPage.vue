@@ -53,6 +53,11 @@
 
       <p class="servidor">Servidor: {{ API_URL }}</p>
       </div>
+
+      <footer class="rodape">
+        <MarcaEventFlow :tamanho="34" />
+        <span>Versão {{ VERSAO }}</span>
+      </footer>
     </ion-content>
   </ion-page>
 </template>
@@ -65,6 +70,9 @@ import { api, API_URL } from '@/services/api'
 import { atualizarUsuario, limparSessao, sessao } from '@/services/sessao'
 import { confirmar } from '@/services/avisos'
 import { iniciais } from '@/services/formato'
+import MarcaEventFlow from '@/components/MarcaEventFlow.vue'
+
+const VERSAO = __APP_VERSION__
 
 const ionRouter = useIonRouter()
 const usuario = computed(() => sessao.usuario)
@@ -174,6 +182,18 @@ ion-label h3 {
 .sair {
   margin-top: 24px;
   --border-width: 2px;
+}
+.rodape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0 28px;
+  opacity: 0.8;
+}
+.rodape span {
+  font-size: 11px;
+  color: #a69fb8;
 }
 .servidor {
   text-align: center;

@@ -2,10 +2,11 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from . import config
 from .database import Base, SessionLocal, engine
 from .routers import auth, categorias, eventos, imagens, locais
 
@@ -26,6 +27,8 @@ def _atualizar_esquema() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    if config.chave_jwt_insegura(config.DATABASE_URL, config.JWT_SECRET):
+        raise RuntimeError("Defina JWT_SECRET com uma chave própria de 32+ caracteres antes de subir em produção.")
     Base.metadata.create_all(bind=engine)  # cria as tabelas na primeira execução
     _atualizar_esquema()
     if os.getenv("SEED_DEMO", "").lower() in ("1", "true", "sim"):
@@ -39,16 +42,35 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="EventFlow API",
     description="API do aplicativo EventFlow — autenticação, eventos, categorias, locais e upload de imagens.",
-    version="1.0.0",
+    version="1.2.0",
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
+    # O app autentica com token no cabeçalho (sem cookies), então liberar a origem não
+    # expõe sessão de ninguém. Métodos e cabeçalhos ficam só nos que o app usa.
     allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+
+CABECALHOS_SEGURANCA = {
+    "X-Content-Type-Options": "nosniff",   # o navegador não "adivinha" o tipo do arquivo
+    "X-Frame-Options": "DENY",             # a API não pode ser embutida em outro site
+    "Referrer-Policy": "no-referrer",
+    "Strict-Transport-Security": "max-age=31536000",
+}
+
+
+@app.middleware("http")
+async def cabecalhos_de_seguranca(request: Request, call_next):
+    resposta = await call_next(request)
+    for chave, valor in CABECALHOS_SEGURANCA.items():
+        resposta.headers.setdefault(chave, valor)
+    return resposta
+
 
 app.include_router(auth.router)
 app.include_router(categorias.router)

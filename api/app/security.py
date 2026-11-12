@@ -41,7 +41,7 @@ def usuario_atual(
     if cred is None:
         raise erro
     try:
-        payload = jwt.decode(cred.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(cred.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM], options={"require": ["exp", "sub"]})
         usuario_id = int(payload["sub"])
     except (jwt.PyJWTError, KeyError, ValueError):
         raise erro

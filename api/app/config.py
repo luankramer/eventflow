@@ -30,7 +30,8 @@ def _normalizar_url_banco(url: str) -> str:
 
 DATABASE_URL = _normalizar_url_banco(os.getenv("DATABASE_URL", "sqlite:///./eventflow.db"))
 
-JWT_SECRET = os.getenv("JWT_SECRET", "chave-de-desenvolvimento-troque-em-producao")
+CHAVE_JWT_PADRAO = "chave-de-desenvolvimento-troque-em-producao"
+JWT_SECRET = os.getenv("JWT_SECRET", CHAVE_JWT_PADRAO)
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRA_DIAS = int(os.getenv("JWT_EXPIRA_DIAS", "30"))
 
@@ -47,3 +48,11 @@ PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
 
 def usa_supabase_storage() -> bool:
     return bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
+
+
+def chave_jwt_insegura(url_banco: str, chave: str) -> bool:
+    """Em produção (Postgres) a chave dos tokens tem que ser própria e longa.
+    Com a chave padrão, qualquer um que leia o código conseguiria fabricar tokens."""
+    if url_banco.startswith("sqlite"):
+        return False
+    return chave == CHAVE_JWT_PADRAO or len(chave) < 32

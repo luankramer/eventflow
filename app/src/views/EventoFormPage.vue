@@ -169,6 +169,7 @@ import { api } from '@/services/api'
 import { voltarPara } from '@/services/navegacao'
 import { avisar, avisarErro, avisarSucesso } from '@/services/avisos'
 import { escolherFoto } from '@/services/foto'
+import { sessao } from '@/services/sessao'
 
 const route = useRoute()
 const ionRouter = useIonRouter()
@@ -214,6 +215,11 @@ async function carregarListas() {
 
 async function carregarEvento() {
   const e = await api.evento(idEvento)
+  if (e.criado_por_id !== sessao.usuario?.id) {
+    avisar('Só quem cadastrou este evento pode editá-lo.')
+    voltarPara(ionRouter, `/eventos/${idEvento}`)
+    return
+  }
   Object.assign(form, {
     nome: e.nome,
     descricao: e.descricao || '',
