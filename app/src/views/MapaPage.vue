@@ -12,7 +12,8 @@
     </ion-header>
 
     <ion-content :scroll-y="false">
-      <div ref="elementoMapa" class="mapa" />
+      <!-- posição inline: o Leaflet lê o estilo ao iniciar, antes do CSS da tela carregar -->
+      <div ref="elementoMapa" class="mapa" style="position: absolute; inset: 0; z-index: 0" />
 
       <!-- Legenda: cada cor é um tipo de evento. Tocar filtra o mapa. -->
       <div v-if="tiposNoMapa.length" class="legenda">
@@ -193,7 +194,12 @@ async function montarMapa() {
     mapa = await criarMapa(elementoMapa.value)
     mapa.aoClicar(fechar)
     desenharMarcadores()
-    enquadrar()
+    // Espera a tela terminar de montar para o mapa saber o próprio tamanho;
+    // sem isso, ao abrir o mapa direto pelo endereço, os pinos ficavam fora da área visível.
+    await new Promise((pronto) => requestAnimationFrame(() => setTimeout(pronto, 120)))
+    if (!mapa) return
+    mapa.atualizarTamanho()
+    if (!selecionado.value) enquadrar()
   } finally {
     montando = false
   }

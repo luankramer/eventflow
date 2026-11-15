@@ -86,7 +86,7 @@ uvicorn app.main:app --reload --host 0.0.0.0
 Sem `.env`, a API usa SQLite (`eventflow.db`); as imagens ficam no mesmo banco.
 Para testar do celular na mesma rede Wi-Fi, use o IP do PC (ex.: `http://192.168.0.10:8000`).
 
-Testes automatizados: `python -m pytest -q`
+Testes automatizados: `pip install -r requirements-dev.txt && python -m pytest -q --cov=app` (41 testes; ver [TESTES.md](../TESTES.md))
 
 ---
 

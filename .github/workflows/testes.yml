@@ -1,0 +1,91 @@
+# Roda todos os testes do EventFlow a cada push e pull request (gratuito no GitHub).
+#
+# - api: 41 testes da API (funcionalidades, segurança e dados de exemplo) num PostgreSQL 16,
+#        o mesmo banco da produção, com relatório de cobertura e auditoria das dependências.
+# - app: compila o app, sobe a API com os dados de exemplo e roda 12 testes de tela
+#        num navegador Chromium em tamanho de celular, mais a auditoria das dependências.
+#
+# O resultado aparece na aba "Actions" e no selo do README.
+name: Testes
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API (pytest + PostgreSQL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: api/requirements*.txt
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt pip-audit
+      - name: Rodar os testes com cobertura
+        run: |
+          pytest -v --cov=app --cov-report=term --cov-report=markdown:cobertura.md
+          { echo "## Cobertura dos testes da API"; cat cobertura.md; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Auditar dependências (vulnerabilidades conhecidas)
+        run: pip-audit -r requirements.txt
+
+  app:
+    name: App (build + testes de tela)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: api/requirements*.txt
+      - name: Instalar dependências
+        run: |
+          npm ci --prefix app
+          pip install -r api/requirements.txt pytest playwright
+          python -m playwright install --with-deps chromium
+      - name: Auditar dependências do app
+        run: npm audit --omit=dev --prefix app
+      - name: Compilar o app apontando para a API local
+        working-directory: app
+        env:
+          VITE_API_URL: http://localhost:8000
+          VITE_GOOGLE_MAPS_KEY: ''
+        run: npx vite build
+      - name: Subir a API (dados de exemplo) e o app
+        run: |
+          (cd api && DATABASE_URL=sqlite:///./e2e.db SEED_DEMO=true nohup python -m uvicorn app.main:app --port 8000 > ../api.log 2>&1 &)
+          (cd app && nohup npx vite preview --port 4173 --strictPort > ../app.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && curl -sf -o /dev/null localhost:4173 && exit 0; sleep 2; done
+          cat api.log app.log; exit 1
+      - name: Rodar os testes de tela
+        run: pytest app/e2e -v -p no:cacheprovider
+      - name: Logs em caso de falha
+        if: failure()
+        run: cat api.log app.log || true

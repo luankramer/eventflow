@@ -2,6 +2,9 @@
 
 # EventFlow
 
+[![Testes](https://github.com/luankramer/eventflow/actions/workflows/testes.yml/badge.svg)](https://github.com/luankramer/eventflow/actions/workflows/testes.yml)
+[![Gerar APK](https://github.com/luankramer/eventflow/actions/workflows/apk.yml/badge.svg)](https://github.com/luankramer/eventflow/actions/workflows/apk.yml)
+
 Avaliação Final — **Desenvolvimento de Aplicativos** (UniNorte)
 
 Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
@@ -34,8 +37,12 @@ A API passou por uma revisão de segurança com **34 testes de ataque automatiza
 - Senhas com bcrypt, token JWT com validade, imagens conferidas pela assinatura do arquivo
 - APK de release (não depurável) e sem backup dos dados do app
 
+## Testes
+
+**53 testes automatizados** rodam no GitHub Actions a cada push: 41 da API (funcionalidades, segurança e dados de exemplo, num PostgreSQL 16) e 12 de tela, com o app aberto num navegador em tamanho de celular. A cobertura de código da API é de 93%. Casos de teste por critério da avaliação e como rodar: [TESTES.md](TESTES.md).
+
 ```bash
-cd api && pip install -r requirements.txt && pytest   # 38 testes
+cd api && pip install -r requirements-dev.txt && pytest --cov=app   # 41 testes da API
 ```
 
 ## Identidade visual

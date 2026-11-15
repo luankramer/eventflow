@@ -57,7 +57,7 @@
           <section>
             <h2 class="titulo-secao">Onde vai ser</h2>
             <div class="local cartao">
-              <div ref="elementoMapa" class="mini-mapa" />
+              <div ref="elementoMapa" class="mini-mapa" style="height: 160px" />
               <div class="local-info">
                 <div class="local-icone"><ion-icon :icon="location" /></div>
                 <div>

@@ -24,7 +24,7 @@
               <template v-else><ion-icon slot="start" :icon="locateOutline" /> Minha localização</template>
             </ion-button>
           </div>
-          <div ref="elementoMapa" class="mapa-seletor cartao" />
+          <div ref="elementoMapa" class="mapa-seletor cartao" style="height: 220px" />
           <p class="dica">Toque no mapa ou arraste o marcador para ajustar.</p>
         </div>
 

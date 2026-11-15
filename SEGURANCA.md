@@ -5,7 +5,7 @@ Revisão do código da API e do app, com **testes de ataque automatizados** roda
 ```bash
 cd api
 pytest tests/test_seguranca.py -v      # 34 testes de ataque
-pytest                                  # todos os testes (38)
+pytest                                  # todos os testes da API (41)
 ```
 
 Os testes rodam em SQLite e também em PostgreSQL 16, o mesmo banco da produção (Supabase).

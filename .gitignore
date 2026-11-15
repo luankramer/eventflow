@@ -1,3 +1,9 @@
 EventFlow.apk
 *.apk
 .DS_Store
+
+# testes
+.coverage
+cobertura.md
+e2e.db
+__pycache__/
