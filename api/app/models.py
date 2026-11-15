@@ -1,14 +1,22 @@
 from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, LargeBinary, Numeric, String, Text, Time
+from zoneinfo import ZoneInfo
+
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, LargeBinary, Numeric, String, Text, Time, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from . import config
 from .database import Base
 
 
 def agora() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def hoje_local() -> date:
+    """Data de hoje no fuso de Rio Branco (o servidor roda em UTC)."""
+    return datetime.now(ZoneInfo(config.FUSO)).date()
 
 
 class Usuario(Base):
@@ -18,6 +26,8 @@ class Usuario(Base):
     nome: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(160), unique=True, index=True)
     senha_hash: Mapped[str] = mapped_column(String(200))
+    admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    bloqueado: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
 
 
@@ -55,6 +65,7 @@ class Evento(Base):
     hora: Mapped[time] = mapped_column(Time)
     preco: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
     imagem_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    oculto: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")  # moderação
 
     categoria_id: Mapped[int] = mapped_column(ForeignKey("categorias.id"))
     local_id: Mapped[int] = mapped_column(ForeignKey("locais.id"))
@@ -65,6 +76,39 @@ class Evento(Base):
 
     categoria: Mapped[Categoria] = relationship(back_populates="eventos", lazy="joined")
     local: Mapped[Local] = relationship(back_populates="eventos", lazy="joined")
+    criado_por: Mapped[Usuario | None] = relationship(lazy="joined")
+    denuncias: Mapped[list["Denuncia"]] = relationship(back_populates="evento", cascade="all, delete-orphan", passive_deletes=True)
+
+    @property
+    def encerrado(self) -> bool:
+        """O evento fica indisponível a partir do dia seguinte à data dele."""
+        return self.data < hoje_local()
+
+
+class Denuncia(Base):
+    """Denúncia de um usuário contra um evento fora das diretrizes."""
+
+    __tablename__ = "denuncias"
+    __table_args__ = (UniqueConstraint("evento_id", "usuario_id", name="uq_denuncia_evento_usuario"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    evento_id: Mapped[int] = mapped_column(ForeignKey("eventos.id", ondelete="CASCADE"), index=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"))
+    motivo: Mapped[str] = mapped_column(String(40))
+    detalhe: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+
+    evento: Mapped[Evento] = relationship(back_populates="denuncias")
+    usuario: Mapped[Usuario] = relationship(lazy="joined")
+
+
+class PalavraProibida(Base):
+    """Termos que marcam um evento como fora das diretrizes (o ADM edita a lista)."""
+
+    __tablename__ = "palavras_proibidas"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    termo: Mapped[str] = mapped_column(String(60), unique=True)
 
 
 class Imagem(Base):

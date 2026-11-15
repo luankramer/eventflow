@@ -64,7 +64,7 @@ def test_login_logout_e_perfil(client, auth):
     assert r.status_code == 200
     token = r.json()["access_token"]
     me = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
-    assert me.json() == {"id": me.json()["id"], "nome": "Luan", "email": "luan@teste.com"}
+    assert me.json() == {"id": me.json()["id"], "nome": "Luan", "email": "luan@teste.com", "admin": False}
     assert client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"}).status_code == 204
     assert client.post("/auth/registro", json={"nome": "X", "email": "luan@teste.com", "senha": "123456"}).status_code in (409, 422)
 

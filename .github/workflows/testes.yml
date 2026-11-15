@@ -1,9 +1,10 @@
 # Roda todos os testes do EventFlow a cada push e pull request (gratuito no GitHub).
 #
-# - api: 41 testes da API (funcionalidades, segurança e dados de exemplo) num PostgreSQL 16,
+# - api: 56 testes da API (funcionalidades, segurança, administração e dados de exemplo) num PostgreSQL 16,
 #        o mesmo banco da produção, com relatório de cobertura e auditoria das dependências.
-# - app: compila o app, sobe a API com os dados de exemplo e roda 12 testes de tela
+# - app: compila o app, sobe a API com os dados de exemplo e roda 17 testes de tela
 #        num navegador Chromium em tamanho de celular, mais a auditoria das dependências.
+#        A senha de ADM abaixo vale só para o banco descartável dos testes.
 #
 # O resultado aparece na aba "Actions" e no selo do README.
 name: Testes
@@ -53,6 +54,8 @@ jobs:
   app:
     name: App (build + testes de tela)
     runs-on: ubuntu-latest
+    env:
+      E2E_ADMIN_SENHA: senha-adm-dos-testes
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -80,7 +83,7 @@ jobs:
         run: npx vite build
       - name: Subir a API (dados de exemplo) e o app
         run: |
-          (cd api && DATABASE_URL=sqlite:///./e2e.db SEED_DEMO=true nohup python -m uvicorn app.main:app --port 8000 > ../api.log 2>&1 &)
+          (cd api && DATABASE_URL=sqlite:///./e2e.db SEED_DEMO=true ADMIN_SENHA="$E2E_ADMIN_SENHA" nohup python -m uvicorn app.main:app --port 8000 > ../api.log 2>&1 &)
           (cd app && nohup npx vite preview --port 4173 --strictPort > ../app.log 2>&1 &)
           for i in $(seq 1 30); do curl -sf localhost:8000/health && curl -sf -o /dev/null localhost:4173 && exit 0; sleep 2; done
           cat api.log app.log; exit 1

@@ -27,6 +27,9 @@ Aplicativo Android para listar, mapear e gerenciar eventos, com API própria.
 - **Categorias** (tipos de evento): listar, cadastrar, editar e excluir, com **cor e ícone** escolhidos no cadastro. Todo evento herda a cor da sua categoria, e o mapa mostra uma legenda
 - **Locais**: listar, cadastrar, editar e excluir, com latitude e longitude escolhidas no mapa ou pelo GPS
 - **Perfil** com os dados do usuário e botão **Sair**
+- **Eventos encerrados**: a lista mostra os próximos eventos; no filtro **Encerrados** aparecem os que já passaram, marcados como **Indisponível**
+- **Denúncia**: qualquer usuário pode denunciar um evento fora das diretrizes, escolhendo o motivo
+- **Administração** (conta ADM): filtra eventos fora das diretrizes (palavras proibidas, denúncias, cadastro incompleto), **oculta** ou **exclui** qualquer evento, **bloqueia** usuários e edita a lista de palavras proibidas
 
 ## Segurança
 
@@ -39,11 +42,22 @@ A API passou por uma revisão de segurança com **34 testes de ataque automatiza
 
 ## Testes
 
-**53 testes automatizados** rodam no GitHub Actions a cada push: 41 da API (funcionalidades, segurança e dados de exemplo, num PostgreSQL 16) e 12 de tela, com o app aberto num navegador em tamanho de celular. A cobertura de código da API é de 93%. Casos de teste por critério da avaliação e como rodar: [TESTES.md](TESTES.md).
+**73 testes automatizados** rodam no GitHub Actions a cada push: 56 da API (funcionalidades, segurança, administração e dados de exemplo, num PostgreSQL 16) e 17 de tela, com o app aberto num navegador em tamanho de celular. Casos de teste por critério da avaliação e como rodar: [TESTES.md](TESTES.md).
 
 ```bash
-cd api && pip install -r requirements-dev.txt && pytest --cov=app   # 41 testes da API
+cd api && pip install -r requirements-dev.txt && pytest --cov=app   # 56 testes da API
 ```
+
+## Administração (ADM)
+
+A conta **admin@eventflow.com** é criada pela própria API ao subir. A senha dela vem da variável `ADMIN_SENHA`, que fica **só no painel do Render** (Environment) e nunca no código. Para trocar a senha, mude a variável e faça um novo deploy.
+
+No app, entre com essa conta e toque em **Perfil → Administração**:
+- **Eventos**: filtros *Fora das diretrizes*, *Denunciados*, *Palavras proibidas*, *Incompletos*, *Ocultos* e *Todos*. Em cada evento: ver as denúncias e descartá-las, **ocultar/mostrar** e **excluir**
+- **Usuários**: bloquear e desbloquear. Quem está bloqueado não entra nem cadastra nada
+- **Palavras**: adicionar e remover palavras proibidas. Acentos e maiúsculas não importam, e só palavras inteiras contam ("arma" não marca "armazém")
+
+Um evento está **fora das diretrizes** quando tem palavra proibida no nome ou na descrição, quando recebeu denúncia, ou quando está incompleto (sem imagem, ou com descrição vazia ou de menos de 20 caracteres).
 
 ## Identidade visual
 

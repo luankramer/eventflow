@@ -164,7 +164,7 @@ function enquadrar() {
 async function carregar() {
   carregando.value = true
   try {
-    const eventos = await api.eventos()
+    const eventos = await api.eventos({ periodo: 'proximos' }) // o mapa mostra só o que ainda vai acontecer
     todosEventos.value = eventos
     if (filtro.value !== null && !eventos.some((e) => e.categoria.id === filtro.value)) filtro.value = null
     grupos.value = agruparPorLocal(filtro.value === null ? eventos : eventos.filter((e) => e.categoria.id === filtro.value))

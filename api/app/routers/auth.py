@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from .. import config
 from ..database import get_db
 from ..models import Usuario
 from ..schemas import LoginIn, RegistroIn, TokenOut, UsuarioOut
@@ -14,7 +15,8 @@ router = APIRouter(prefix="/auth", tags=["Autenticação"])
 @router.post("/registro", response_model=TokenOut, status_code=status.HTTP_201_CREATED)
 def registrar(dados: RegistroIn, db: Session = Depends(get_db)):
     email = dados.email.lower()
-    if db.scalar(select(Usuario).where(func.lower(Usuario.email) == email)):
+    # o e-mail do ADM é reservado: ninguém cria uma conta comum com ele
+    if email == config.ADMIN_EMAIL or db.scalar(select(Usuario).where(func.lower(Usuario.email) == email)):
         raise HTTPException(409, "Já existe uma conta com este e-mail.")
     usuario = Usuario(nome=dados.nome.strip(), email=email, senha_hash=gerar_hash(dados.senha))
     db.add(usuario)
@@ -32,6 +34,8 @@ def login(dados: LoginIn, request: Request, db: Session = Depends(get_db)):
         limitador.registrar_falha(ip, dados.email)
         raise HTTPException(401, "E-mail ou senha incorretos.")
     limitador.registrar_sucesso(ip, dados.email)
+    if usuario.bloqueado:
+        raise HTTPException(403, "Conta bloqueada pelo administrador.")
     return TokenOut(access_token=criar_token(usuario.id), usuario=UsuarioOut.model_validate(usuario))
 
 

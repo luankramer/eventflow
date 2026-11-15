@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
-import { carregarSessao, estaLogado } from '@/services/sessao'
+import { carregarSessao, eAdmin, estaLogado } from '@/services/sessao'
 import TabsPage from '@/views/TabsPage.vue'
 
 const routes = [
@@ -25,6 +25,7 @@ const routes = [
   { path: '/locais', component: () => import('@/views/LocaisPage.vue') },
   { path: '/locais/novo', component: () => import('@/views/LocalFormPage.vue') },
   { path: '/locais/:id/editar', component: () => import('@/views/LocalFormPage.vue') },
+  { path: '/admin', component: () => import('@/views/AdminPage.vue'), meta: { admin: true } },
   { path: '/:pathMatch(.*)*', redirect: '/tabs/eventos', meta: { publica: true } },
 ]
 
@@ -38,6 +39,7 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   await carregarSessao()
   if (!to.meta.publica && !estaLogado()) return { path: '/login', query: { voltar: to.fullPath } }
+  if (to.meta.admin && !eAdmin()) return '/tabs/perfil' // área só do ADM (a API também confere)
   if (to.path === '/login' && estaLogado()) return '/tabs/eventos'
   return true
 })

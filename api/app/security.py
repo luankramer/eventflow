@@ -48,4 +48,13 @@ def usuario_atual(
     usuario = db.get(Usuario, usuario_id)
     if usuario is None:
         raise erro
+    if usuario.bloqueado:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Conta bloqueada pelo administrador.")
+    return usuario
+
+
+def exigir_admin(usuario: Usuario = Depends(usuario_atual)) -> Usuario:
+    """Rotas de moderação: só a conta de administrador."""
+    if not usuario.admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Acesso restrito ao administrador.")
     return usuario

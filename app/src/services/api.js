@@ -64,6 +64,8 @@ async function requisicao(metodo, caminho, { corpo, formData } = {}) {
 
   if (!resposta.ok) {
     if (resposta.status === 401 && sessao.token) aoPerderSessao()
+    // conta bloqueada pelo ADM: encerra a sessão salva no aparelho
+    if (resposta.status === 403 && dados?.detail === 'Conta bloqueada pelo administrador.' && sessao.token) aoPerderSessao()
     throw new ErroApi(mensagemDoErro(dados, resposta.status), resposta.status)
   }
   return dados
@@ -91,6 +93,7 @@ export const api = {
   criarEvento: (dados) => requisicao('POST', '/eventos', { corpo: dados }),
   editarEvento: (id, dados) => requisicao('PUT', `/eventos/${id}`, { corpo: dados }),
   excluirEvento: (id) => requisicao('DELETE', `/eventos/${id}`),
+  denunciarEvento: (id, motivo, detalhe) => requisicao('POST', `/eventos/${id}/denuncias`, { corpo: { motivo, detalhe } }),
 
   // Categorias
   categorias: () => requisicao('GET', '/categorias'),
@@ -105,6 +108,21 @@ export const api = {
   criarLocal: (dados) => requisicao('POST', '/locais', { corpo: dados }),
   editarLocal: (id, dados) => requisicao('PUT', `/locais/${id}`, { corpo: dados }),
   excluirLocal: (id) => requisicao('DELETE', `/locais/${id}`),
+
+  // Administração (só a conta ADM)
+  admin: {
+    resumo: () => requisicao('GET', '/admin/resumo'),
+    eventos: (filtro, busca) => requisicao('GET', `/admin/eventos${montarQuery({ filtro, busca })}`),
+    ocultar: (id, oculto) => requisicao('PUT', `/admin/eventos/${id}/ocultar`, { corpo: { oculto } }),
+    excluir: (id) => requisicao('DELETE', `/admin/eventos/${id}`),
+    denuncias: (id) => requisicao('GET', `/admin/eventos/${id}/denuncias`),
+    descartarDenuncias: (id) => requisicao('DELETE', `/admin/eventos/${id}/denuncias`),
+    palavras: () => requisicao('GET', '/admin/palavras'),
+    adicionarPalavra: (termo) => requisicao('POST', '/admin/palavras', { corpo: { termo } }),
+    removerPalavra: (id) => requisicao('DELETE', `/admin/palavras/${id}`),
+    usuarios: () => requisicao('GET', '/admin/usuarios'),
+    bloquear: (id, bloqueado) => requisicao('PUT', `/admin/usuarios/${id}/bloqueio`, { corpo: { bloqueado } }),
+  },
 
   // Upload de imagem
   enviarImagem: (blob, nomeArquivo) => {

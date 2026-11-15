@@ -42,6 +42,14 @@ SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "eventos")
 
 UPLOAD_MAX_MB = int(os.getenv("UPLOAD_MAX_MB", "5"))
 
+# Conta de administrador (moderação). A senha fica só no painel do Render (ADMIN_SENHA),
+# nunca no código. Sem ADMIN_SENHA, nenhuma conta ADM é criada.
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@eventflow.com").strip().lower()
+ADMIN_SENHA = os.getenv("ADMIN_SENHA", "")
+
+# Fuso usado para saber se um evento já passou.
+FUSO = os.getenv("FUSO", "America/Rio_Branco")
+
 # URL pública da API, usada para montar links de imagens salvas localmente.
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
 

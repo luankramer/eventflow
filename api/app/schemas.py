@@ -1,5 +1,6 @@
 from datetime import date, time
-from typing import Annotated
+from datetime import datetime
+from typing import Annotated, Literal
 
 from fastapi import Path as ParametroCaminho
 
@@ -21,6 +22,7 @@ class UsuarioOut(Orm):
     id: int
     nome: str
     email: EmailStr
+    admin: bool = False
 
 
 class RegistroIn(BaseModel):
@@ -113,7 +115,92 @@ class EventoOut(Orm):
     imagem_url: str | None = None
     categoria: CategoriaOut
     local: LocalOut
+    encerrado: bool = False  # data já passou: o app mostra como "Indisponível"
 
 
 class UploadOut(BaseModel):
     url: str
+
+
+# ---------- Denúncias ----------
+MOTIVOS_DENUNCIA = ("Conteúdo ofensivo", "Golpe ou fraude", "Informação falsa", "Spam ou repetido", "Outro")
+
+
+class DenunciaIn(BaseModel):
+    motivo: Literal[MOTIVOS_DENUNCIA]  # type: ignore[valid-type]
+    detalhe: str | None = Field(default=None, max_length=300)
+
+
+class DenunciaOut(Orm):
+    id: int
+    motivo: str
+    detalhe: str | None = None
+    criado_em: datetime
+    usuario: "UsuarioResumo"
+
+
+# ---------- Administração ----------
+class UsuarioResumo(Orm):
+    id: int
+    nome: str
+    email: EmailStr
+
+
+class Problema(BaseModel):
+    tipo: Literal["palavras", "denuncias", "incompleto"]
+    detalhe: str
+
+
+class EventoAdminOut(EventoOut):
+    oculto: bool
+    criado_por: UsuarioResumo | None = None
+    total_denuncias: int = 0
+    problemas: list[Problema] = []
+
+
+class OcultarIn(BaseModel):
+    oculto: bool
+
+
+class UsuarioAdminOut(Orm):
+    id: int
+    nome: str
+    email: EmailStr
+    admin: bool
+    bloqueado: bool
+    criado_em: datetime
+    total_eventos: int = 0
+
+
+class BloqueioIn(BaseModel):
+    bloqueado: bool
+
+
+class PalavraIn(BaseModel):
+    termo: str = Field(min_length=2, max_length=60)
+
+    @field_validator("termo")
+    @classmethod
+    def limpar(cls, v: str) -> str:
+        v = " ".join(v.split()).lower()
+        if len(v) < 2:
+            raise ValueError("Informe ao menos 2 caracteres.")
+        return v
+
+
+class PalavraOut(Orm):
+    id: int
+    termo: str
+
+
+class ResumoAdmin(BaseModel):
+    fora_das_diretrizes: int
+    denunciados: int
+    com_palavras: int
+    incompletos: int
+    ocultos: int
+    usuarios: int
+    usuarios_bloqueados: int
+
+
+DenunciaOut.model_rebuild()

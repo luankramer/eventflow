@@ -22,6 +22,11 @@
         </div>
 
         <div class="corpo">
+          <div v-if="evento.encerrado" class="aviso-encerrado">
+            <ion-icon :icon="timeOutline" />
+            <div><strong>Evento encerrado · indisponível</strong><span>Este evento já aconteceu.</span></div>
+          </div>
+
           <!-- ingresso com data, horário e preço -->
           <div class="sombra">
             <div class="ingresso">
@@ -72,8 +77,20 @@
             </div>
           </section>
 
-          <ion-button v-if="podeAlterar" expand="block" fill="clear" color="danger" class="excluir" @click="excluir">
+          <!-- Moderação: o ADM oculta ou exclui qualquer evento -->
+          <div v-if="admin" class="moderacao cartao">
+            <span class="rotulo-adm"><ion-icon :icon="shieldCheckmarkOutline" /> Administração</span>
+            <ion-button expand="block" fill="outline" color="medium" class="ocultar" @click="ocultar">
+              <ion-icon slot="start" :icon="eyeOffOutline" /> Ocultar do app
+            </ion-button>
+          </div>
+
+          <ion-button v-if="podeAlterar || admin" expand="block" fill="clear" color="danger" class="excluir" @click="excluir">
             <ion-icon slot="start" :icon="trashOutline" /> Excluir evento
+          </ion-button>
+
+          <ion-button v-if="podeDenunciar" expand="block" fill="clear" color="medium" class="denunciar" @click="denunciar">
+            <ion-icon slot="start" :icon="flagOutline" /> Denunciar evento
           </ion-button>
         </div>
       </div>
@@ -86,15 +103,17 @@ import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   IonBackButton, IonButton, IonContent, IonIcon, IonPage, IonSpinner,
-  onIonViewDidEnter, onIonViewWillEnter, useIonRouter,
+  actionSheetController, onIonViewDidEnter, onIonViewWillEnter, useIonRouter,
 } from '@ionic/vue'
-import { createOutline, location, navigate, trashOutline } from 'ionicons/icons'
+import {
+  createOutline, eyeOffOutline, flagOutline, location, navigate, shieldCheckmarkOutline, timeOutline, trashOutline,
+} from 'ionicons/icons'
 import CapaEvento from '@/components/CapaEvento.vue'
 import { api } from '@/services/api'
 import { avisarErro, avisarSucesso, confirmar } from '@/services/avisos'
 import { formatarDataLonga, formatarHora, formatarPreco, partesData } from '@/services/formato'
 import { corCategoria, iconeCategoria } from '@/services/cores'
-import { estaLogado, sessao } from '@/services/sessao'
+import { eAdmin, estaLogado, sessao } from '@/services/sessao'
 import { aoFalharGoogle, criarMapa, linkRotaGoogleMaps } from '@/services/mapa'
 
 const route = useRoute()
@@ -109,6 +128,9 @@ const icone = computed(() => iconeCategoria(evento.value?.categoria))
 const data = computed(() => partesData(evento.value.data))
 // Editar e excluir só aparecem para quem cadastrou o evento (a API também confere).
 const podeAlterar = computed(() => estaLogado() && evento.value?.criado_por_id === sessao.usuario?.id)
+const admin = computed(() => eAdmin())
+// Qualquer pessoa pode denunciar um evento de outra pessoa (visitante entra antes).
+const podeDenunciar = computed(() => evento.value && !admin.value && evento.value.criado_por_id !== sessao.usuario?.id)
 const linkRota = computed(() => linkRotaGoogleMaps(evento.value.local.latitude, evento.value.local.longitude))
 
 async function desenharMapa() {
@@ -149,9 +171,44 @@ async function excluir() {
   const ok = await confirmar('Excluir evento', `Tem certeza que deseja excluir "${evento.value.nome}"?`, 'Excluir')
   if (!ok) return
   try {
-    await api.excluirEvento(evento.value.id)
+    await (admin.value ? api.admin.excluir(evento.value.id) : api.excluirEvento(evento.value.id))
     avisarSucesso('Evento excluído.')
     ionRouter.navigate('/tabs/eventos', 'back', 'replace')
+  } catch (erro) {
+    avisarErro(erro)
+  }
+}
+
+const MOTIVOS = ['Conteúdo ofensivo', 'Golpe ou fraude', 'Informação falsa', 'Spam ou repetido', 'Outro']
+
+async function denunciar() {
+  if (!estaLogado()) {
+    ionRouter.push({ path: '/login', query: { voltar: route.fullPath } })
+    return
+  }
+  const folha = await actionSheetController.create({
+    header: 'Denunciar evento',
+    subHeader: 'O administrador vai analisar. Qual é o problema?',
+    buttons: [...MOTIVOS.map((m) => ({ text: m, data: m })), { text: 'Cancelar', role: 'cancel' }],
+  })
+  await folha.present()
+  const { data: motivo, role } = await folha.onDidDismiss()
+  if (role === 'cancel' || !motivo) return
+  try {
+    await api.denunciarEvento(evento.value.id, motivo)
+    avisarSucesso('Denúncia enviada. Obrigado por avisar!')
+  } catch (erro) {
+    avisarErro(erro)
+  }
+}
+
+async function ocultar() {
+  const ok = await confirmar('Ocultar evento', 'O evento sai da lista e do mapa, mas não é apagado. Dá para mostrar de novo na Administração.', 'Ocultar')
+  if (!ok) return
+  try {
+    await api.admin.ocultar(evento.value.id, true)
+    avisarSucesso('Evento ocultado.')
+    ionRouter.navigate('/admin', 'back', 'replace')
   } catch (erro) {
     avisarErro(erro)
   }
@@ -166,6 +223,45 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.aviso-encerrado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #ece8f2;
+  color: #4a435e;
+}
+.aviso-encerrado ion-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.aviso-encerrado strong {
+  display: block;
+  font-size: 15px;
+}
+.aviso-encerrado span {
+  font-size: 13px;
+}
+.moderacao {
+  margin-top: 18px;
+  padding: 12px 14px 6px;
+}
+.rotulo-adm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ef-acai, #6b2fa8);
+}
+.denunciar {
+  margin-top: 0;
+  font-size: 14px;
+}
 .barra-flutuante {
   position: absolute;
   z-index: 10;

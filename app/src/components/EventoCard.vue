@@ -1,6 +1,6 @@
 <template>
   <!-- Card em formato de ingresso: canhoto com a data | informações | miniatura -->
-  <div class="sombra">
+  <div class="sombra" :class="{ encerrado: evento.encerrado }">
   <button class="ingresso" type="button" :style="{ '--cat': cor.cor, '--cat-suave': cor.suave, '--cat-texto': cor.texto, '--cat-tinta': cor.tinta }" @click="$emit('abrir', evento.id)">
     <div class="canhoto">
       <span class="semana">{{ data.semana }}</span>
@@ -16,7 +16,8 @@
       <h3>{{ evento.nome }}</h3>
       <p class="linha"><ion-icon :icon="timeOutline" /> {{ formatarHora(evento.hora) }}</p>
       <p class="linha"><ion-icon :icon="locationOutline" /> {{ evento.local.nome }}</p>
-      <span class="preco" :class="{ gratuito: !Number(evento.preco) }">{{ formatarPreco(evento.preco) }}</span>
+      <span v-if="evento.encerrado" class="indisponivel">Indisponível · encerrado</span>
+      <span v-else class="preco" :class="{ gratuito: !Number(evento.preco) }">{{ formatarPreco(evento.preco) }}</span>
     </div>
 
     <div class="miniatura">
@@ -42,6 +43,21 @@ const icone = computed(() => iconeCategoria(props.evento.categoria))
 </script>
 
 <style scoped>
+/* evento que já passou: apagado e com o selo "Indisponível" */
+.encerrado .ingresso {
+  filter: grayscale(0.9);
+  opacity: 0.72;
+}
+.indisponivel {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #ece8f2;
+  color: #5b5470;
+  font-size: 12px;
+  font-weight: 700;
+}
 .sombra {
   margin-bottom: 14px;
   filter: drop-shadow(0 6px 14px rgba(30, 16, 54, 0.09));

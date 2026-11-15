@@ -35,6 +35,8 @@ EVENTOS = [
     ("Feira Gastronômica Acreana", "Comidas típicas e produtores da região.", 17, time(17, 30), "15", "Gastronomia", "Parque da Maternidade"),
     ("Corrida Noturna 5K", "Corrida aberta com kit e medalha.", 24, time(20, 0), "60", "Esporte", "Parque da Maternidade"),
     ("Semana de Tecnologia", "Palestras e minicursos de desenvolvimento.", 31, time(8, 0), "25.5", "Tecnologia", "UniNorte"),
+    # já passou: o app mostra como "Indisponível" no filtro Encerrados
+    ("Feira de Artesanato", "Artesãos locais com peças de madeira, sementes e cerâmica.", -6, time(9, 0), "0", "Cultura", "Parque da Maternidade"),
 ]
 
 

@@ -22,6 +22,16 @@
         />
       </div>
 
+      <!-- Próximos (padrão) ou Encerrados: os que já passaram aparecem como "Indisponível" -->
+      <div class="periodo" role="tablist">
+        <button type="button" role="tab" :aria-selected="periodo === 'proximos'" :class="{ ativo: periodo === 'proximos' }" @click="mudarPeriodo('proximos')">
+          <ion-icon :icon="calendarOutline" /> Próximos
+        </button>
+        <button type="button" role="tab" :aria-selected="periodo === 'encerrados'" :class="{ ativo: periodo === 'encerrados' }" @click="mudarPeriodo('encerrados')">
+          <ion-icon :icon="timeOutline" /> Encerrados
+        </button>
+      </div>
+
       <div v-if="categorias.length" class="filtros">
         <button type="button" :class="{ ativo: categoriaId === null }" @click="filtrar(null)">
           <ion-icon :icon="apps" /> Todas
@@ -63,8 +73,8 @@
 
         <div v-if="!carregando && !eventos.length" class="vazio">
           <div class="vazio-icone"><ion-icon :icon="filtrando ? searchOutline : ticketOutline" /></div>
-          <h3>{{ filtrando ? 'Nenhum evento encontrado' : 'Nenhum evento ainda' }}</h3>
-          <p>{{ filtrando ? 'Tente buscar por outro nome, categoria ou local.' : 'Cadastre o primeiro evento no botão +.' }}</p>
+          <h3>{{ textoVazio.titulo }}</h3>
+          <p>{{ textoVazio.texto }}</p>
         </div>
       </section>
 
@@ -83,7 +93,7 @@ import {
   IonContent, IonFab, IonFabButton, IonIcon, IonPage, IonRefresher, IonRefresherContent,
   IonSearchbar, IonSkeletonText, onIonViewWillEnter, useIonRouter,
 } from '@ionic/vue'
-import { add, apps, personCircle, searchOutline, ticketOutline } from 'ionicons/icons'
+import { add, apps, calendarOutline, personCircle, searchOutline, ticketOutline, timeOutline } from 'ionicons/icons'
 import EventoCard from '@/components/EventoCard.vue'
 import DestaqueCard from '@/components/DestaqueCard.vue'
 import { api } from '@/services/api'
@@ -97,25 +107,44 @@ const categorias = ref([])
 const busca = ref('')
 const categoriaId = ref(null)
 const carregando = ref(true)
+const periodo = ref('proximos')
 
 const primeiroNome = computed(() => (sessao.usuario?.nome || '').split(' ')[0] || 'bem-vindo')
 const filtrando = computed(() => Boolean(busca.value?.trim() || categoriaId.value))
-// O carrossel aparece só na tela inicial, sem busca nem filtro.
-const destaques = computed(() => (filtrando.value || eventos.value.length < 2 ? [] : eventos.value.slice(0, 5)))
+// O carrossel aparece só na tela inicial (próximos), sem busca nem filtro.
+const destaques = computed(() =>
+  filtrando.value || periodo.value !== 'proximos' || eventos.value.length < 2 ? [] : eventos.value.slice(0, 5),
+)
 const tituloLista = computed(() => {
-  if (!filtrando.value) return 'Todos os eventos'
+  if (!filtrando.value) return periodo.value === 'encerrados' ? 'Eventos encerrados' : 'Todos os próximos eventos'
   const n = eventos.value.length
   return `${n} ${n === 1 ? 'resultado' : 'resultados'}`
 })
+const textoVazio = computed(() => {
+  if (filtrando.value) return { titulo: 'Nenhum evento encontrado', texto: 'Tente buscar por outro nome, categoria ou local.' }
+  if (periodo.value === 'encerrados') return { titulo: 'Nenhum evento encerrado', texto: 'Os eventos que já passaram aparecem aqui como indisponíveis.' }
+  return { titulo: 'Nenhum evento por vir', texto: 'Cadastre o próximo evento no botão +.' }
+})
 
+function mudarPeriodo(valor) {
+  if (periodo.value === valor) return
+  periodo.value = valor
+  eventos.value = []
+  carregar()
+}
+
+let pedidoAtual = 0
 async function carregar() {
+  // busca, filtro e período podem disparar pedidos seguidos: só a última resposta vale
+  const pedido = ++pedidoAtual
   carregando.value = true
   try {
-    eventos.value = await api.eventos({ busca: busca.value?.trim(), categoria_id: categoriaId.value })
+    const lista = await api.eventos({ busca: busca.value?.trim(), categoria_id: categoriaId.value, periodo: periodo.value })
+    if (pedido === pedidoAtual) eventos.value = lista
   } catch (erro) {
-    avisarErro(erro)
+    if (pedido === pedidoAtual) avisarErro(erro)
   } finally {
-    carregando.value = false
+    if (pedido === pedidoAtual) carregando.value = false
   }
 }
 
@@ -181,6 +210,33 @@ onIonViewWillEnter(() => {
   margin: -28px 16px 0;
   position: relative;
   z-index: 2;
+}
+.periodo {
+  display: flex;
+  gap: 4px;
+  margin: 4px 16px 10px;
+  padding: 4px;
+  border-radius: 14px;
+  background: #ebe5f4;
+}
+.periodo button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 11px;
+  padding: 9px 0;
+  background: transparent;
+  color: #6c6480;
+  font: 700 14px/1 var(--ef-fonte);
+  cursor: pointer;
+}
+.periodo button.ativo {
+  background: #fff;
+  color: var(--ef-noite);
+  box-shadow: 0 2px 8px rgba(30, 16, 54, 0.12);
 }
 .filtros {
   display: flex;

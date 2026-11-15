@@ -13,14 +13,24 @@ from playwright.sync_api import expect, sync_playwright
 
 API = os.getenv("API_URL", "http://localhost:8000")
 APP = os.getenv("APP_URL", "http://localhost:4173")
+# senha da conta ADM da API de teste (a mesma passada em ADMIN_SENHA ao subir a API)
+SENHA_ADM = os.getenv("E2E_ADMIN_SENHA", "senha-adm-dos-testes")
 
 
-def _post(rota, corpo):
-    req = urllib.request.Request(API + rota, data=json.dumps(corpo).encode(), headers={"Content-Type": "application/json"})
+def _post(rota, corpo, token=None):
+    cab = {"Content-Type": "application/json"}
+    if token:
+        cab["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(API + rota, data=json.dumps(corpo).encode(), headers=cab)
     try:
-        return urllib.request.urlopen(req).status
+        resposta = urllib.request.urlopen(req)
+        return resposta.status, json.loads(resposta.read() or b"null")
     except urllib.error.HTTPError as e:
-        return e.code
+        return e.code, None
+
+
+def _token(email, senha):
+    return _post("/auth/login", {"email": email, "senha": senha})[1]["access_token"]
 
 
 @pytest.fixture(scope="session")
@@ -169,3 +179,82 @@ def test_perfil_mostra_dados_e_versao(pagina):
     expect(pagina.locator(".perfil h1")).to_have_text("Usuário Teste")
     expect(pagina.get_by_text("teste@eventflow.com").first).to_be_visible()
     expect(pagina.locator(".rodape").get_by_text("Versão")).to_be_visible()
+
+
+# ---------- Eventos encerrados ----------
+def test_encerrados_aparecem_como_indisponivel(pagina):
+    pagina.goto(APP + "/tabs/eventos")
+    expect(pagina.locator(".ingresso")).to_have_count(4)  # padrão: só os próximos
+    expect(pagina.locator(".indisponivel")).to_have_count(0)
+    pagina.locator(".periodo button", has_text="Encerrados").click()
+    expect(pagina.locator(".ingresso")).to_have_count(1)
+    expect(pagina.locator(".indisponivel")).to_contain_text("Indisponível")
+    pagina.locator(".ingresso").first.click()
+    expect(pagina.locator(".aviso-encerrado")).to_contain_text("indisponível")
+
+
+# ---------- Denúncia e administração ----------
+def test_usuario_denuncia_evento(pagina):
+    _post("/auth/registro", {"nome": "Outra Pessoa", "email": "outra@teste.com", "senha": "segredo1"})
+    entrar(pagina, "outra@teste.com", "segredo1")
+    pagina.goto(APP + "/eventos/2")
+    pagina.locator("ion-button.denunciar").click()
+    pagina.locator("ion-action-sheet button", has_text="Golpe ou fraude").click()
+    pagina.wait_for_function("[...document.querySelectorAll('ion-toast')].some(t => (t.message || '').startsWith('Denúncia enviada'))")
+
+
+def test_usuario_comum_nao_abre_a_administracao(pagina):
+    entrar(pagina)
+    pagina.goto(APP + "/admin")
+    pagina.wait_for_url(lambda u: u.endswith("/tabs/perfil"))
+    expect(pagina.locator(".atalho-adm")).to_have_count(0)
+
+
+def test_adm_ve_denunciados_oculta_e_mostra_evento(pagina):
+    outra = _token("outra@teste.com", "segredo1") if _post("/auth/registro", {"nome": "Outra Pessoa", "email": "outra@teste.com", "senha": "segredo1"})[0] != 201 else None
+    _post("/eventos/3/denuncias", {"motivo": "Informação falsa"}, outra or _token("outra@teste.com", "segredo1"))
+    entrar(pagina, "admin@eventflow.com", SENHA_ADM)
+    pagina.goto(APP + "/tabs/perfil")
+    pagina.locator(".atalho-adm").click()
+    pagina.wait_for_url(lambda u: u.endswith("/admin"))
+    expect(pagina.locator(".numero.alerta strong")).not_to_have_text("0")
+
+    pagina.locator(".filtros button", has_text="Denunciados").click()
+    item = pagina.locator(".evento-adm").first
+    expect(item.locator(".selo.denuncias")).to_be_visible()
+    item.locator("ion-button", has_text="Denúncias").click()
+    expect(item.locator(".denuncia").first).to_be_visible()
+
+    nome = item.locator("h3").inner_text()
+    item.locator("ion-button.botao-ocultar").click()
+    pagina.wait_for_function("[...document.querySelectorAll('ion-toast')].some(t => t.message === 'Evento ocultado do app.')")
+    with urllib.request.urlopen(API + "/eventos") as r:
+        assert nome not in [e["nome"] for e in json.load(r)]
+
+    pagina.locator(".filtros button", has_text="Ocultos").click()
+    pagina.locator(".evento-adm", has_text=nome).locator("ion-button.botao-ocultar").click()
+    pagina.wait_for_function("[...document.querySelectorAll('ion-toast')].some(t => t.message === 'Evento visível de novo no app.')")
+    with urllib.request.urlopen(API + "/eventos") as r:
+        assert nome in [e["nome"] for e in json.load(r)]
+
+
+def test_adm_bloqueia_usuario_e_edita_palavras(pagina):
+    _post("/auth/registro", {"nome": "Pessoa Bloqueada", "email": "bloq@teste.com", "senha": "segredo1"})
+    entrar(pagina, "admin@eventflow.com", SENHA_ADM)
+    pagina.goto(APP + "/admin")
+    pagina.locator("ion-segment-button", has_text="Usuários").click()
+    linha = pagina.locator("ion-item.usuario", has_text="bloq@teste.com")
+    linha.locator("ion-toggle").click()
+    expect(linha.locator(".selo", has_text="Bloqueado")).to_be_visible()
+    assert _post("/auth/login", {"email": "bloq@teste.com", "senha": "segredo1"})[0] == 403
+    linha.locator("ion-toggle").click()
+    expect(linha.locator(".selo", has_text="Bloqueado")).to_have_count(0)
+    assert _post("/auth/login", {"email": "bloq@teste.com", "senha": "segredo1"})[0] == 200
+
+    pagina.locator("ion-segment-button", has_text="Palavras").click()
+    pagina.locator(".nova-palavra input").fill("show clandestino")
+    pagina.locator(".nova-palavra ion-button").click()
+    chip = pagina.locator(".palavra", has_text="show clandestino")
+    expect(chip).to_be_visible()
+    chip.locator("button").click()
+    expect(chip).to_have_count(0)

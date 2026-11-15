@@ -44,3 +44,5 @@ export async function limparSessao() {
 }
 
 export const estaLogado = () => Boolean(sessao.token)
+
+export const eAdmin = () => Boolean(sessao.token && sessao.usuario?.admin)

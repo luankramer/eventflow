@@ -47,6 +47,16 @@
         </ion-item>
       </ion-list>
 
+      <!-- só a conta de administrador vê este atalho -->
+      <router-link v-if="usuario?.admin" to="/admin" class="atalho-adm">
+        <div class="icone-adm"><ion-icon :icon="shieldCheckmarkOutline" /></div>
+        <div>
+          <strong>Administração</strong>
+          <span>Eventos fora das diretrizes, denúncias e usuários</span>
+        </div>
+        <ion-icon :icon="chevronForward" class="seta" />
+      </router-link>
+
       <ion-button expand="block" color="danger" fill="outline" class="botao-grande sair" :disabled="saindo" @click="sair">
         <ion-icon slot="start" :icon="logOutOutline" /> Sair
       </ion-button>
@@ -65,7 +75,9 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
-import { idCardOutline, logInOutline, logOutOutline, mailOutline, person, personOutline } from 'ionicons/icons'
+import {
+  chevronForward, idCardOutline, logInOutline, logOutOutline, mailOutline, person, personOutline, shieldCheckmarkOutline,
+} from 'ionicons/icons'
 import { api, API_URL } from '@/services/api'
 import { atualizarUsuario, limparSessao, sessao } from '@/services/sessao'
 import { confirmar } from '@/services/avisos'
@@ -182,6 +194,41 @@ ion-label h3 {
 .sair {
   margin-top: 24px;
   --border-width: 2px;
+}
+.atalho-adm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 4px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--ef-noite);
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(30, 16, 54, 0.25);
+}
+.icone-adm {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: var(--ef-pitaya);
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.atalho-adm strong {
+  display: block;
+  font-size: 16px;
+}
+.atalho-adm span {
+  font-size: 12px;
+  opacity: 0.75;
+}
+.atalho-adm .seta {
+  margin-left: auto;
+  font-size: 20px;
+  opacity: 0.7;
 }
 .rodape {
   display: flex;

@@ -72,3 +72,12 @@ Histórico do Git verificado: **nenhuma senha ou chave secreta** foi commitada (
 - `POST /auth/registro` responde 409 para e-mail já cadastrado, o que permite descobrir se um e-mail tem conta. É o comportamento esperado numa tela de cadastro.
 - O token fica salvo no **Preferences** do Capacitor, protegido pelo sandbox do Android mas sem criptografia extra. O logout apaga o token do aparelho; o token vence em 30 dias.
 - A chave do Google Maps fica dentro do APK, como em todo app de mapa. Para uso real, ela deve ser restrita ao pacote `br.uninorte.eventflow` no Google Cloud.
+
+
+## Administração (versão 1.3)
+- A conta ADM é criada pela API a partir de `ADMIN_SENHA` (8 a 72 caracteres), que fica só no painel do Render. Se a senha mudar lá, o próximo deploy atualiza a conta.
+- O e-mail do ADM é reservado: ninguém consegue criar uma conta comum com ele.
+- Todas as rotas `/admin/*` exigem a conta ADM. Usuário comum recebe 403, visitante recebe 401, e o app também esconde a tela. Os testes cobrem isso.
+- Um usuário bloqueado recebe 403 no login e também em qualquer pedido feito com um token antigo. O app encerra a sessão salva. A conta ADM não pode ser bloqueada.
+- Evento oculto some da lista, do mapa e dos detalhes públicos (404), mas continua no banco.
+- Denúncia exige login, vale uma por pessoa por evento e não pode ser feita no próprio evento. Os motivos são fixos e o detalhe tem limite de 300 caracteres.
